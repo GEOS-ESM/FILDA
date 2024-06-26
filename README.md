@@ -1,1 +1,3 @@
-# geos-template-repo
+# FILDA
+
+Fire Light Detection Algorithm
