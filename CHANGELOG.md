@@ -17,3 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
+## [v1.0 2024-08-13]
+
+### Added
+- Add FILDA02 source code files to src directory
+### Changed
+
+### Fixed
+
+### Removed
+
+### Deprecated
