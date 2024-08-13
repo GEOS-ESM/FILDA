@@ -1,0 +1,52 @@
+# FILDA2 v1.0 namelist file Oct. 10 2022, Meng Zhou
+#-----------------------------------------------------------------------
+# Static dataset
+NTL_DIR             : ../Static/NTL/
+SURF_DIR            : ../Static/MCD12Q1/
+GASFLARE_DIR        : ../Static/GASFLARE/
+PEATLAND_DIR        : ../Static/PEATLAND/
+LUT_DIR             : ../Static/LUT/
+# The default year for the land surface type and the nighttime climatology
+# if FILDA2 cannot find the the correct static data provide, it will try to 
+# use the following years.
+Default_year_SURF	: 2020
+Default_year_NTL	: 2019
+# prefix for static data
+NTL_prefix          : VNPNTL
+PEAT_prefix         : N/A
+#-----------------------------------------------------------------------
+# Run & Output
+# User need to put the VIIRS Level1b and GOES-FP data under the RUN_DIR
+RUN_DIR             : ../RUN/
+OUT_DIR             : ../OUTPUT/
+Layout_MODE         : 3
+COPY_STATIC         : 1
+#-----------------------------------------------------------------------
+# Adjustable thresholds
+# Users do not change for operational run
+thres_BTI04         : 295.0
+thres_BTD_IMG       : 10.0
+thres_DNB           : 0.99
+thres_BTD_MOD       : 0.0
+thres_ABSI04        : 320
+thres_SATI04        : 367
+thres_FLDI04        : 208
+thres_FLDI05        : 310
+thres_SATI05        : 335
+thres_cloud_gross   : 9
+thres_cloud_high    : 4.5
+thres_cloud_water   : 2
+thres_cloud_I04     : 295
+thres_cloud_I05     : 265
+twilight_ang_min    : 92.5
+twilight_ang_max    : 97.5
+thres_num           : 10
+thres_frac          : 0.25
+half_win_ini        : 10
+half_win_max        : 31
+win_step            : 1
+thres_num_FRP       : 10
+thres_frac_FRP      : 0.25
+half_win_ini_FRP    : 3
+half_win_max_FRP    : 61
+win_step_FRP        : 1

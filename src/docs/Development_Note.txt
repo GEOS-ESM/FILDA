@@ -1,0 +1,94 @@
+================================================
+MZ 10/29/2022
+Modify the logic for find tiles in the sinusoidal projection
+
+GEOS_FP.py
+
+================================================
+MZ 10/10/2022
+upload code to download geos-fp
+
+GEOS_FP.py
+
+================================================
+MZ 10/9/2022
+Add the default year some of the static data
+
+#-----------------------------------------------------------------------
+# The default year for the land surface type and the nighttime climatology
+# if FILDA2 cannot find the the correct static data provide, it will try to 
+# use the following years.
+Default_year_SURF	: 2020
+Default_year_NTL	: 2019
+
+================================================
+MZ 10/8/2022
+Add option to copy all the static data into RUN_DIR
+
+READ_MODE           : 1
+
+================================================
+MZ 10/7/2022
+Update the logic of reading namelist.ini
+
+================================================
+MZ 10/05/2022
+Code development for generating NTL climatology and reading MCD14Q1
+
+================================================
+MZ 07/07/2022
+Make Git-hub repository for FILDA-2 code
+
+================================================
+MZ 02/17/2022
+Add solution to address the South Atlantic magnetic anomaly in fire detection
+
+================================================
+MZ 02/17/2022
+Code development for gas flaring flagging
+
+================================================
+MZ 11/10/2021
+Fix bugs based on the current FILDA output, tuning the contexture test
+
+================================================
+MZ 10/21/2021
+Add peatland database into land surface type
+
+================================================
+MZ 10/14/2021
+Extend FILDA2 to NOAA20
+
+================================================
+MZ 09/02/2021
+Include the land surface type into the output
+Include all the available radiance into the output
+
+================================================
+MZ 08/12/2021
+First version of spectrum fitting code is implemented in FILDA2
+
+================================================
+MZ 05/10/2021
+Modify the output format to *.nc file
+
+================================================
+MZ 04/1/2021
+Modularize the FILDA-2 code 
+
+================================================
+MZ 03/1/2021
+Updates code to paralle computing
+
+================================================
+MZ 10/01/2020
+Updates to detect fires by FILDA algorithm using VIIRS DNB , M-band, and I-band
+
+================================================
+MZ 03/01/2019
+Updates to detect fires by FILDA algorithm using VIIRS DNB and M-band
+
+================================================
+MZ 02/01/2019
+Vanilla version of fire light detection algorithm in python
+Fire detection is rely on VNP14
