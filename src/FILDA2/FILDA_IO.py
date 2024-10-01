@@ -265,8 +265,10 @@ def get_files_mod_1(sat, namelist, time):
 	#-------------
 	# GEOS-FP
 	#-------------
+	# MZ, Sept 25 2024, temporary hack for geos-IT 
+# 	geo_it_time = time.Y +'-'+time.M +'-'+time.D +'T'+time.h
+# 	file_temp = glob.glob( geosFPDir + '*' + geo_it_time + '*')
 	file_temp = glob.glob( geosFPDir + '*' + time.GOES + '*')
-
 	try:
 		file_dict['GEOS-FP'] = file_temp[0]
 	except (IndexError):
@@ -1039,18 +1041,18 @@ def read_DayNightFlag(filename):
 	return DayNightFlag
 
 #-----------------------------------------------------------------------
-def read_MCD12Q1(filename, params):
+def read_MCD12Q1(filename, params, verbose = False):
 	
 	'''
 	Read the MCD12Q1 with pyhdf API
-	
-	
+
 	'''
 	
 	from pyhdf.SD import SD, SDC
 	import numpy as np
 	
-	print(' - read_MCD12Q1:', filename)
+	if verbose:
+		print(' - read_MCD12Q1:', filename)
 	
 	# open the HDF4 file
 	hdf = SD(filename, SDC.READ)
@@ -1060,9 +1062,8 @@ def read_MCD12Q1(filename, params):
 	for param in params:
 		
 		# get the Land_Cover_Type_1 data
-		sds = hdf.select('LC_Type1')
+		sds = hdf.select(param)
 		data = sds.get()
-		
 		# get the valid range and fill value metadata
 		valid_range = sds.attributes()['valid_range']
 		fill_value = sds.attributes()['_FillValue']
@@ -1076,10 +1077,11 @@ def read_MCD12Q1(filename, params):
 	
 	return output
 #-----------------------------------------------------------------------
-def read_nc(obFile, obVars):
+def read_nc(obFile, obVars, verbose = False):
 
 	### from netCDF4 import Dataset
-	print(' - Reading', obFile)
+	if verbose:
+		print(' - Reading', obFile)
 	ncid = Dataset(obFile)
 	
 	varList = list(ncid.variables)
@@ -1342,8 +1344,8 @@ def aux_infor_dict():
 	infor_dict['FP_Line'] 	= ['Granule line of fire pixel',  'None',  'None', 'i2']
 	infor_dict['FP_Sample'] = ['Granule sample of fire pixel', 'None',  'None', 'i2']
 	
-	infor_dict['FP_Longitude'] = ['Longitude of fire pixel' , 'degree',  'None', 'f4']
-	infor_dict['FP_Latitude']  = ['Latitude of fire pixel' , 'degree',  'None', 'f4']
+	infor_dict['FP_Longitude'] = ['Longitude of fire pixel' , 'degrees_east',  'None', 'f4']
+	infor_dict['FP_Latitude']  = ['Latitude of fire pixel' , 'degrees_north',  'None', 'f4']
 	
 	
 	infor_dict['FP_M13_WinSize']	= ['M13 (4.05 um) spatial window size for FRP calculation' , 'None',  'None', 'i2']
@@ -1425,7 +1427,7 @@ def aux_infor_dict():
 	
 	
 	infor_dict['DNB_observations']  = ['DNB radiance of fire pixel' , 'nW/sr/m^2', 'None', 'f4']
-	infor_dict['FP_Land_Type']   = ['MODIS Land cover product MCD12C1' , 'None',  'None', 'i1']
+	infor_dict['FP_Land_Type']   = ['MODIS Land cover product MCD12Q1' , 'None',  'None', 'i1']
 	infor_dict['FP_Peatland']    = ['Peatland flag, 0: Unknown, 1: Contain Peatland' , 'None',  'None', 'i1']
 	infor_dict['FP_Peatfrac']    = ['Peatland fraction' , 'None', 'None', 'f4']
 	infor_dict['FP_Gas_Flaring'] = ['Gas Flaring flag' , 'None',  '0: Unknown, 1: Gas flaring pixel', 'i1']
@@ -1449,6 +1451,7 @@ def aux_infor_dict():
 	infor_dict['FP_Bowtie'] = ['Fraction of bowtie effect' , 'None',  'None', 'f4']
 	
 	infor_dict['Sensor_Zenith']  = ['View zenith angle' , 'degree',  'None', 'f4']
+	
 	infor_dict['Sensor_Azimuth'] = ['View azimuth angle', 'degree',  'None', 'f4']
 	
 	infor_dict['Solar_Zenith']  = ['Solar zenith angle', 'degree',  'None', 'f4']
@@ -1458,12 +1461,12 @@ def aux_infor_dict():
 	infor_dict['Algorithm_QA'] = ['Algorithm QA', 'bit field', 'Refer to ATBD', 'u4']
 	
 	infor_dict['FP_AdjCloud'] = ['Number of adjacent cloud pixels', 'None', 'None', 'i1']
+	
 	infor_dict['FP_AdjWater'] = ['Number of adjacent water pixels', 'None', 'None', 'i1']
 	
 	infor_dict['FP_confidence'] = ['Detection confidence', 'None', 'None', 'i1']
 	
-	infor_dict['FP_SAA_flag'] = ['South Atlantic Anomaly, 0: Normal, 1: SAA', 'None', 'None', 'i1']
-	
+	infor_dict['FP_SAA_flag'] = ['South Atlantic Anomaly', 'None', '0: Normal, 1: SAA', 'i1']
 
 	return infor_dict	
 	
@@ -1505,6 +1508,14 @@ def write_nc(save_dict, sat, savename):
 	else:
 		chunksize_x = 32
 		chunksize_y = 6400	
+
+	# Define a CRS variable for the geographic coordinate system
+	crs_var = ncid.createVariable('crs', 'i4')
+	crs_var.grid_mapping_name = "latitude_longitude"
+	crs_var.epsg_code = "EPSG:4326"  # WGS84 standard
+	crs_var.semi_major_axis = 6378137.0
+	crs_var.inverse_flattening = 298.257223563
+	crs_var.longitude_of_prime_meridian = 0.0
 	
 	for key in save_dict.keys():
 		
@@ -1522,10 +1533,17 @@ def write_nc(save_dict, sat, savename):
 					tempInstance.units = infor_dict[key][1]
 					tempInstance.long_name = infor_dict[key][0]
 					tempInstance.legend    = infor_dict[key][2]
-					tempInstance.data_type = dtype	
-# 				if key in infor_dict.keys():
-# 					tempInstance.units = infor_dict[key][1]
-# 					tempInstance.long_name = infor_dict[key][0]
+					tempInstance.data_type = dtype
+					if key == 'FP_Longitude':
+						tempInstance.standard_name = 'longitude'
+					elif key == 'FP_Latitude':
+						tempInstance.standard_name = 'latitude'
+					else:
+						# not necessary for Geographic Coordinates (Lat/Lon), but critial for
+						# Sinusodial, UTM or other complex projections
+						# keep it here for climate and forecast (CF) conventions
+						tempInstance.grid_mapping = 'crs'
+						tempInstance.coordinates = 'FP_Longitude FP_Latitude'
 			if nDim == 2:
 				if key in infor_dict.keys():
 					dtype = infor_dict[key][3]

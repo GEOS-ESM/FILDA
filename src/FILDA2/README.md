@@ -5,7 +5,7 @@ VNP47/VJ147 is a new experimental Level-2 (L2) VIIRS nighttime active fire combu
 
 ##  - **Recent update** - 
 
-1. Fix version control problem
+1. Fix rounding problem when calculating the pixel index of the detected fire
 
 ## Table of content
 

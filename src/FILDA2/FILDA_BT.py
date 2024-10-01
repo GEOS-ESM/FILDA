@@ -1,8 +1,16 @@
 '''
 Comment in progress
 '''
-
 import numpy as np
+
+import logging
+import warnings
+
+# MZ Spet 26, 2024
+# Suppress runtime warnings (e.g., overflow encountered in exp)
+warnings.filterwarnings('ignore', category=RuntimeWarning)
+warnings.filterwarnings('ignore', category=UserWarning)
+
 
 lamda = dict(lamda_M07 = 0.865,
 		 	lamda_M08 = 1.24,

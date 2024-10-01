@@ -17,14 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-## [v1.0 2024-08-13]
+## [v1.0 2024-10-01]
 
 ### Added
-- Add FILDA02 source code files to src directory
+- Add the multi-spectrum biphasic fire parameter package
 ### Changed
 
 ### Fixed
-
+- Fix bugs of FILDA2
 ### Removed
 
 ### Deprecated

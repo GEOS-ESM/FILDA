@@ -41,6 +41,19 @@ import FILDA_Cloud 		# modele for cloud masking
 import FILDA_CLT	    # modele for generating the surface light climatology
 import FILDA_BT
 
+
+def memory_usage(prefix = ''):
+	import psutil
+	# Returns the memory usage in MB
+	process = psutil.Process()  # Gets the current process
+	mem_info = process.memory_info()  # Get the memory details of the process
+	
+	# rss (Resident Set Size) is the non-swapped physical memory a process has used
+	mem_mb = mem_info.rss / (1024 ** 2)
+	print( ' - ' + prefix + " Memory usage at start (MB):", mem_mb)
+	return
+
+
 def init_detection(dirNameList, string_handler = ['DIR', 'prefix'], non_read_handler = '#'):
 	'''
 	init_detection reads namelist.input for FILDA
@@ -117,7 +130,7 @@ def init_detection(dirNameList, string_handler = ['DIR', 'prefix'], non_read_han
 	return namelist
 
 #-----------------------------------------------------------------------
-def sel_candidates_mod(modData, namelist, time):
+def sel_candidates_mod(modData, namelist, time, verbose = False):
 	
 	'''
 	sel_candidates_mod selects the fire candidates on the M-band resolution
@@ -144,7 +157,7 @@ def sel_candidates_mod(modData, namelist, time):
 	# Generate DNB climatologies
 	#---------------------------
 	dnb_clt_var = ['DNB_At_Sensor_Radiance_500m_mean', 'DNB_At_Sensor_Radiance_500m_std']
-	dnb_clt = FILDA_CLT.get_dnb_clt(modData, dnb_clt_var, time, namelist)
+	dnb_clt = FILDA_CLT.get_dnb_clt(modData, dnb_clt_var, time, namelist, verbose)
 	
 	# use 10 nW cm^-2 sr^-1 to filter out city...
 	idx_city = np.where( dnb_clt['DNB_At_Sensor_Radiance_500m_mean'] > 10)
@@ -161,7 +174,7 @@ def sel_candidates_mod(modData, namelist, time):
 	thres_DNB = sorted( modData['DNB_observations'][modData['DNB_observations']==modData['DNB_observations']])
 	valid_num = int(np.nansum(modData['DNB_observations']==modData['DNB_observations'])*0.01)
 	thres_DNB = np.nanmean( thres_DNB[0:valid_num] )
-	print(f' - FILDA2: 1% lowest DNB radiance {thres_DNB}')
+	print(f' - FILDA2: 1% lowest DNB radiance {thres_DNB}\n')
 
 
 	# put data into dictionary for other application
@@ -285,7 +298,7 @@ def sel_candidates_img(imgData, DNB_infor, namelist):
 						( (imgData['BTI04']<=209.)  & (imgData['BTI05']>335.) )												  )\
 					  )
 	abs_flag[abs_idx] = 1
-	print(' - FILDA: Find out', np.shape(abs_idx)[1], 'absolute fires')
+	print(' - FILDA: Find out', np.shape(abs_idx)[1], 'absolute fires\n')
 
 	#-------------------------------------------------------------------
 	# then use the rigid criterion to select potential background fire
@@ -295,7 +308,7 @@ def sel_candidates_img(imgData, DNB_infor, namelist):
 	                       ( imgData['CM'] > 0)   			 & \
 	                       ( imgData['latitude'] == imgData['latitude'] ) ) #& (imgData['land_water_mask']==1)
 	bg_fire_flag[bg_fire_idx] = 1
-	print(' - FILDA: Find out', np.shape(bg_fire_idx)[1], 'potential background fires')
+	print(' - FILDA: Find out', np.shape(bg_fire_idx)[1], 'potential background fires\n')
 	
 	# Determined the dynamic threshold for selecting candidates
 	BTI04   = copy.deepcopy(imgData['BTI04'])
@@ -376,14 +389,14 @@ def sel_candidates_img(imgData, DNB_infor, namelist):
 	                       ( imgData['CM'] > 0)   								& \
 	                       ( imgData['latitude'] == imgData['latitude'] ) ) #& (imgData['land_water_mask']==1)
 	                       
-	print(' - FILDA: Find out', np.shape(icandi_idx)[1], 'thermal light anomaly')
+	print(' - FILDA: Find out', np.shape(icandi_idx)[1], 'thermal light anomaly\n')
 
 
 	FP_lines   = np.concatenate( (vis_ano_idx[0], icandi_idx[0], abs_idx[0] ) )
 	FP_samples = np.concatenate( (vis_ano_idx[1], icandi_idx[1], abs_idx[1] ) )	
 	fire_img = np.concatenate( ( np.expand_dims(FP_lines, axis = 1), np.expand_dims(FP_samples, axis = 1) ), axis = 1)
 	fire_img = np.unique(fire_img, axis = 0)		
-	print(' - FILDA: Concatenating fires into ' ,np.shape(fire_img)[0], ' I band candidates')
+	print(' - FILDA: Concatenating fires into ' ,np.shape(fire_img)[0], ' I band candidates\n')
 	
 	ir_fire_flag[icandi_idx] = 1
 	
@@ -438,12 +451,19 @@ def sel_candidates(modData, imgData, namelist, time):
 	cdt_fire_mod, DNB_infor = sel_candidates_mod(modData, namelist, time)
 	cdt_fire_img 		    = sel_candidates_img(imgData, DNB_infor, namelist)
 	
-	print(' - FILDA: Find', len(cdt_fire_mod['FP_line']), 'on DNB band...')
-	print(' - FILDA: Find', len(cdt_fire_img['FP_line']), 'on I band...')
+	print(' - FILDA: Find', len(cdt_fire_mod['FP_line']), 'on DNB band...\n')
+	print(' - FILDA: Find', len(cdt_fire_img['FP_line']), 'on I band...\n')
+
+	# MZ Spet 29 2024, add memory usage...
+# 	memory_usage(prefix = 'sel_candidates 458')
 	
 	# record the absolute fire index...	
 	fire_abs   = np.full(np.shape(imgData['latitude']), 0).astype(int)
 	abs_idx    = np.where(cdt_fire_img['FP_abs_img'] == 1)
+	
+	# MZ Spet 29 2024, add memory usage...
+# 	memory_usage(prefix = 'sel_candidates 465')
+	
 	if np.size(abs_idx)>0:
 		fire_abs[cdt_fire_img['FP_line'][abs_idx], cdt_fire_img['FP_sample'][abs_idx]] = 1
 
@@ -476,9 +496,9 @@ def sel_candidates(modData, imgData, namelist, time):
 	if len(cdt_fire_img) >0:
 		cdt_fire_img =  np.unique(cdt_fire_img, axis = 0)
 
-		print(' - FILDA: Find', np.shape(abs_idx)[1], 'absolute fires on I band...')
-		print(' - FILDA: Find', np.shape(bg_idx)[1],  'potential high temperature fires on I band...')
-		print(' - FILDA: Find', len(cdt_fire_img), 'in total...')
+		print(' - FILDA: Find', np.shape(abs_idx)[1], 'absolute fires on I band...\n')
+		print(' - FILDA: Find', np.shape(bg_idx)[1],  'potential high temperature fires on I band...\n')
+		print(' - FILDA: Find', len(cdt_fire_img), 'in total...\n')
 
 		cdt_fire_img   = np.array(cdt_fire_img).astype(int)
 		FP_line_img    = cdt_fire_img[:,0]
@@ -594,7 +614,7 @@ def get_BG_IMG(imgData, modData, cdt_fire, masking = True):
 	# for land dataset...
 	# find cloudy and water pixel
 	icandi_idx = np.where( ( imgData['CM'] < 1 )  | ( imgData['land_water_mask']!=1 ) )
-	print(' - FILDA: Exclude', np.shape(icandi_idx)[1], 'cloudy pixel from land backgroud...') # cloudy pixels 
+	print(' - FILDA: Exclude', np.shape(icandi_idx)[1], 'cloudy pixel from land backgroud...\n') # cloudy pixels 
 	# remove the watery and cloudy fire pixels
 	bg_BT['BTI04_LAND'][icandi_idx] = np.nan
 	bg_BT['BTI05_LAND'][icandi_idx] = np.nan
@@ -604,7 +624,7 @@ def get_BG_IMG(imgData, modData, cdt_fire, masking = True):
 	# For ocean dataset....
 	# find cloudy and land pixel
 	icandi_idx = np.where( ( imgData['CM'] < 1 )  | ( imgData['land_water_mask']==1 ) )
-	print(' - FILDA: Exclude', np.shape(icandi_idx)[1], 'cloudy pixels from ocean backgroud...') # cloudy pixels 
+	print(' - FILDA: Exclude', np.shape(icandi_idx)[1], 'cloudy pixels from ocean backgroud...\n') # cloudy pixels 
 	# remove the watery and cloudy fire pixels
 	bg_BT['BTI04_OCEAN'][icandi_idx] = np.nan
 	bg_BT['BTI05_OCEAN'][icandi_idx] = np.nan
@@ -621,7 +641,7 @@ def get_BG_IMG(imgData, modData, cdt_fire, masking = True):
 	sample_remove = cdt_fire['FP_sample_img'][idx]
 
 	# remove the fire in the land dataset
-	print(' - FILDA: Exclude', len(line_remove), ' potential fire pixels from backgroud...')
+	print(' - FILDA: Exclude', len(line_remove), ' potential fire pixels from backgroud...\n')
 	# remove the all fire pixels in the land dataset
 	bg_BT['BTI04_LAND'][line_remove, sample_remove] = np.nan
 	bg_BT['BTI05_LAND'][line_remove, sample_remove] = np.nan
@@ -659,13 +679,13 @@ def get_BG_IMG_2(imgData, modData, cdt_fire, masking = True):
 	if masking:
 		# MZ 29-03 2022, standard product only exclude cloud to detect the gas flaring over ocean
 		icandi_idx = np.where( ( imgData['CM'] < 1 ) ) # | ( imgData['land_water_mask']!=1 )
-		print(' - FILDA: Exclude', np.shape(icandi_idx)[1], 'watery and from backgroud...') # cloudy pixels 
+		print(' - FILDA: Exclude', np.shape(icandi_idx)[1], 'watery and from backgroud...\n') # cloudy pixels 
 		# remove the watery and cloudy fire pixels
 		bg_BT['BTI04'][icandi_idx] = np.nan
 		bg_BT['BTI05'][icandi_idx] = np.nan
 		bg_BT['BTD_IMG'][icandi_idx] = np.nan
 
-		print(' - FILDA: Exclude', len(cdt_fire['FP_line_img']), 'all potential fire pixels from backgroud...')
+		print(' - FILDA: Exclude', len(cdt_fire['FP_line_img']), 'all potential fire pixels from backgroud...\n')
 		# remove the all potential fire pixels
 		bg_BT['BTI04'][cdt_fire['FP_line_img'], cdt_fire['FP_sample_img']] = np.nan
 		bg_BT['BTI05'][cdt_fire['FP_line_img'], cdt_fire['FP_sample_img']] = np.nan
@@ -876,7 +896,7 @@ def identify_one(cdt_fire, bg_BT, counter, namelist, verbose = False):
 	FP_abs_img 	  = cdt_fire['FP_abs_img'][counter]
 	
 	if verbose:
-		print( ' - FILDA:', FP_line_img, FP_sample_img, cdt_fire['FP_land_water_mask'][counter])
+		print( ' - FILDA:', FP_line_img, FP_sample_img, cdt_fire['FP_land_water_mask'][counter], '\n')
 	
 	I04           = cdt_fire['BTI04'][counter]
 	I05           = cdt_fire['BTI05'][counter]
@@ -886,11 +906,11 @@ def identify_one(cdt_fire, bg_BT, counter, namelist, verbose = False):
 	if cdt_fire['FP_land_water_mask'][counter] == 0:
 		data_type = '_OCEAN'
 		if verbose:
-			print( ' - FILDA: using water dataset to generate background statistics...', cdt_fire['FP_land_water_mask'][counter])
+			print( ' - FILDA: using water dataset to generate background statistics...', cdt_fire['FP_land_water_mask'][counter], '\n')
 	else:
 		data_type = '_LAND'
 		if verbose:
-			print( ' - FILDA: using land dataset to generate background statistics...', cdt_fire['FP_land_water_mask'][counter])
+			print( ' - FILDA: using land dataset to generate background statistics...', cdt_fire['FP_land_water_mask'][counter], '\n')
 			
 	#-----------------------------------
 	# absolute test...
@@ -916,8 +936,8 @@ def identify_one(cdt_fire, bg_BT, counter, namelist, verbose = False):
 	bg_stat = cal_bgstat(bg_BT, FP_line_img, FP_sample_img, namelist, data_type=data_type, verbose = verbose)
 	if bg_stat == False:
 		if verbose:
-			print(' - FILDA: WARNING, CANNOT FIND ENOUGH PIXEL IN THE CLEAN BACKGROUND DATA SET!')
-			print(' - FILDA: Enlarge the window to select the background')
+			print(' - FILDA: WARNING, CANNOT FIND ENOUGH PIXEL IN THE CLEAN BACKGROUND DATA SET!\n')
+			print(' - FILDA: Enlarge the window to select the background\n')
 
 		if bg_stat == False:
 		
@@ -1103,7 +1123,7 @@ def fire_test(cdt_fire, bg_BT, namelist):
 	# use multiprocessing to accelerate the speed...
 	#------------------------------------------------
 	sub_arrays_list = split_array(len_array, numCore)
-	print(' - FILDA: Divide the fire candidates into', len(sub_arrays_list), 'sigments...')
+	print(' - FILDA: Divide the fire candidates into', len(sub_arrays_list), 'sigments...\n')
 	# set up the worker pools
 	pool = Pool(processes=numCore)
 	# define the partial functions for parallel computing
@@ -1179,7 +1199,7 @@ def check_saa(fire_pixel, bg_BT):
 	bg_BT['BTM13_LAND'][line_remove, sample_remove] = np.nan
 	bg_BT['BTM13_OCEAN'][line_remove, sample_remove] = np.nan
 
-	print( ' - FILDA, checking SAA')
+	print( ' - FILDA, checking SAA\n')
 	FP_SAA_CHECK = []
 	
 	land_water_suffix = ['_OCEAN', '_LAND']
@@ -1232,8 +1252,8 @@ def check_saa(fire_pixel, bg_BT):
 			FP_SAA_CHECK.append(0)
 	
 	FP_SAA_CHECK = np.array(FP_SAA_CHECK)
-	print(' - FILDA, number of Normal fire', np.size(FP_SAA_CHECK[np.where(FP_SAA_CHECK == 0)]))
-	print(' - FILDA, number of SAA affected fire',np.size(FP_SAA_CHECK[np.where(FP_SAA_CHECK == 1)]))
+	print(' - FILDA, number of Normal fire', np.size(FP_SAA_CHECK[np.where(FP_SAA_CHECK == 0)]), '\n')
+	print(' - FILDA, number of SAA affected fire',np.size(FP_SAA_CHECK[np.where(FP_SAA_CHECK == 1)]), '\n')
 	
 	return FP_SAA_CHECK
 	
@@ -1477,7 +1497,7 @@ def get_fire_paras(fire_pixel, MODAREALUT, namelist):
 	FP_Num_Fire = num_fire
 	FP_Area_MOD = area[FP_line_mod, FP_sample_mod]
 	
-	print(f' - FILDA: Calculating fire paramters...' )
+	print(f' - FILDA: Calculating fire paramters...\n' )
 	# main part of calculating the fire parameter...
 	c     = 2.88 * 10**-9
 	sigma = 5.6704*10**-8
@@ -1539,7 +1559,7 @@ def check_saa_2(fire_pixel):
 				FILDA_BT.cal_brightness_temperature(fire_pixel['FP_M13_Rad_Mean'] + 3*fire_pixel['FP_M13_Rad_MAD'], FILDA_BT.lamda['lamda_' + 'M13'])	
 
 	idx = np.where( ((delta_M11<10) | (delta_M13<2.5)) & (fire_pixel['SAA_flag'] == 1))
-	print(f' - Check SAA: Find {np.shape(idx)[1]} SAA affected pixel' )
+	print(f' - Check SAA: Find {np.shape(idx)[1]} SAA affected pixel\n' )
 	SAA_flag = np.zeros_like(fire_pixel['SAA_flag'])
 	SAA_flag[idx] = 1
 	fire_pixel['FP_SAA_flag'] = SAA_flag
@@ -1547,7 +1567,7 @@ def check_saa_2(fire_pixel):
 	return fire_pixel
 
 #-----------------------------------------------------------------------
-def get_surface_type_sinu(fire_img, fire_mod, namelist, time, **kwargs):
+def get_surface_type_sinu(fire_img, fire_mod, namelist, time, verbose = False, **kwargs):
 	import numpy as np
 	import glob
 	'''
@@ -1591,7 +1611,7 @@ def get_surface_type_sinu(fire_img, fire_mod, namelist, time, **kwargs):
 	if namelist['COPY_STATIC'] == 1:
 		SURF_DIR  = SURF_DIR
 	else:
-		SURF_DIR  = SURF_DIR + year + '/'
+		SURF_DIR  = SURF_DIR + year + '/001/'
 	
 	# MZ, modify the logic for find the max, min tiles in sinusoidal projection...
 	cord = [ fire_img['FP_Latitude'], fire_img['FP_Longitude']]
@@ -1630,17 +1650,18 @@ def get_surface_type_sinu(fire_img, fire_mod, namelist, time, **kwargs):
 	
 		# Then try to find the land surface data...
 		# Improvement needs to be make here for after MODIS era...
-		filename = glob.glob(SURF_DIR + '*' + tile + '*.hdf')    
+		filename = glob.glob(SURF_DIR + '*' + tile + '*.hdf')
+
 		if len(filename) == 0:
 			continue
 
 		# MZ May-10-2023, define new function to read the land surface type
 		# using pyHDF API
-		nc_data = FILDA_IO.read_MCD12Q1( filename[0], ['LC_Type1', 'LW'])
+		nc_data = FILDA_IO.read_MCD12Q1( filename[0], ['LC_Type1', 'LW'], verbose)
 	
 # 		nc_data = FILDA_IO.read_nc( filename[0], ['LC_Type1', 'LW'])
 	
-		land_tile = nc_data['LC_Type1']
+		land_tile  = nc_data['LC_Type1']
 		water_flag = nc_data['LW']
 	
 		land_tile[water_flag==1]=17
@@ -1712,7 +1733,7 @@ def get_surface_type(fire_img, fire_mod, namelist, time, **kwargs):
 	
 	if year not in ['2019', '2018', '2017', '2016', '2015']:
 		year = '2018'
-		print(' - Use the default land surface database [MODIS 2018].')	
+		print(' - Use the default land surface database [MODIS 2018].\n')	
 	
 	
 	SURF_DIR = SURF_DIR + year + '/'
@@ -1778,7 +1799,7 @@ def get_surface_type(fire_img, fire_mod, namelist, time, **kwargs):
 	return fire_img, fire_mod
 
 #-----------------------------------------------------------------------
-def add_aux_infor(fire_pixel, cdt_fire, namelist, time, modData, imgData, **kwargs):
+def add_aux_infor(fire_pixel, cdt_fire, namelist, time, modData, imgData, verbose=False, **kwargs):
 	
 	'''
 	add_aux_infor integrates all auxiliary information for the fire pixel
@@ -1896,15 +1917,15 @@ def add_aux_infor(fire_pixel, cdt_fire, namelist, time, modData, imgData, **kwar
 	fire_mod['FP_confidence'] = fire_mod['Fire_mask'][fire_mod['FP_Line'], fire_mod['FP_Sample']]	
 	fire_mod['Algorithm_QA']  = fire_img['Algorithm_QA']
 
-	print(' - FILDA: Detect', len(fire_img['FP_Line']), 'fires on I band')
-	print(' - FILDA: Detect', len(fire_mod['FP_Line']), 'fires on M band')
+	print(' - FILDA: Detect', len(fire_img['FP_Line']), 'fires on I band\n')
+	print(' - FILDA: Detect', len(fire_mod['FP_Line']), 'fires on M band\n')
 	
 	
 	# get the land surface type
 	# MZ 10/02/2022, updates to read the MCD12Q1
 	# fire_img, fire_mod = get_surface_type(fire_img, fire_mod, namelist, time, **kwargs)
 	if flag_land_surface:
-		fire_img, fire_mod = get_surface_type_sinu(fire_img, fire_mod, namelist, time)
+		fire_img, fire_mod = get_surface_type_sinu(fire_img, fire_mod, namelist, time, verbose=verbose)
 	
 	# get the gas flaring type
 	if flag_gas_flaring:
@@ -1977,7 +1998,7 @@ def get_gasflaring(fire_img, fire_mod, namelist):
 	# read gas flaring database
 # 	gas_file  = 'gas_flaring_2012_2020.nc'
 	gas_file  = glob.glob(GAS_DIR + '*.nc')[0]
-	print(f' - get_gasflaring: {GAS_DIR}')
+	print(f' - get_gasflaring: {GAS_DIR}\n')
 	
 	gas_ncid = Dataset(gas_file, 'r')
 	gas_data = {}
@@ -1988,23 +2009,21 @@ def get_gasflaring(fire_img, fire_mod, namelist):
 	gas_data['lat_resol']    = float(gas_ncid.Latitude_resolution)
 	gas_data['lon_resol']    = float(gas_ncid.Longitude_resolution)
 	gas_ncid.close()
-
 	N, S, W, E, _, _, _, _,_ = gas_data['Coordinate'].split(' ')
 	S = float(S)
 	W = float(W)
-	
+
 	gas_data['gas_flaring'][np.where(gas_data['gas_flaring'] != gas_data['gas_flaring'])] = 0
 
 	# find the MOD
-	idx_lon = np.round((fire_mod['FP_Longitude'] - W )/gas_data['lon_resol']).astype(int)
+	idx_lon = np.round((fire_mod['FP_Longitude'] - W )//gas_data['lon_resol']).astype(int)
 	idx_lat = np.round((fire_mod['FP_Latitude'] - S)/gas_data['lat_resol']).astype(int)
 	gas_flaring = gas_data['gas_flaring'][idx_lat, idx_lon]
 	fire_mod['FP_Gas_Flaring'] = gas_flaring
 
-
 	# find the IMG
-	idx_lon = np.round((fire_img['FP_Longitude'] - W )/gas_data['lon_resol']).astype(int)
-	idx_lat = np.round((fire_img['FP_Latitude'] - S)/gas_data['lat_resol']).astype(int)
+	idx_lon = np.round((fire_img['FP_Longitude'] - W )//gas_data['lon_resol']).astype(int)
+	idx_lat = np.round((fire_img['FP_Latitude'] - S)//gas_data['lat_resol']).astype(int)
 	gas_flaring = gas_data['gas_flaring'][idx_lat, idx_lon]
 	fire_img['FP_Gas_Flaring'] = gas_flaring
 	
@@ -2045,7 +2064,7 @@ def get_peatland(fire_img, fire_mod, namelist, **kwargs):
 	# MZ, the prefix of the peatland now can be specified by the namelist...
 	PEATLAND_PREFIX = namelist['PEAT_prefix']
 	if PEATLAND_PREFIX == 'N/A':
-		print(f' - get_peatland: No prefix for peatland is specified...')
+		print(f' - get_peatland: No prefix for peatland is specified...\n')
 		PEATLAND_PREFIX = ''
 	
 	# get the boundary of the geo location...
