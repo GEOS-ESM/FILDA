@@ -1,0 +1,77 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# variable; long name; unit; legend; data type
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Sample output
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+t_b; Background Temperature; K; None; f4
+C; Water Vapor Scaling Factor; None; None; f4
+QA_flag; Quality flag; None; 1: Uniphasic, 2: Biphasic, 3: Biphasic->Uniphasic, 11: Uniphasic+CLT Background, 12: Biphasic+CLT Background, 13: Biphasic->Uniphasic+CLT Background, 100: Bowtie, 101: Bad Background Signal, 102: Bad Fire Signal, 103: Fail Uniphasic, 104: Fail Biphasic; u4
+t_s; Smoldering Temperature; K; None; f4
+p_s; Smoldering Fraction; None; None; f4
+t_f; Flaming Temperature; K; None; f4
+p_f; Flaming Fraction; None; None; f4
+year; year; None; None; i2
+doy; Day of year; None; None; i1
+overpass; Index of the overpass time by very 6 minutes; None ; None; i2
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# Inherent from FILDA & other dataset
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+FP_Power_R; Radiance based FRP estimation; MW; None; f4
+FP_confidence; FILDA detection confidence; None; Refer to FILDA ATBD; i1
+FP_Land_Type; MODIS Land cover product MCD12C1; None;  None; i1
+FP_Gas_Flaring; Gas Flaring flag; None; 0: Unknown, 1: Gas flaring pixel; i1
+FP_Peatland; Peatland flag; None; 0: Unknown, 1: Contain Peatland; i1
+FP_Peatfrac; Peatland fraction; None; None; f4
+FP_SAA_flag; South Atlantic Anomaly; None; 0: Normal, 1: SAA; i1
+FP_Latitude; Latitude of fire pixel; degrees_north; None; f4
+FP_Longitude; Longitude of fire pixel; degrees_east; None; f4
+FP_Area; Pixel area; m^2; None; f4
+FP_Line; Granule line of fire pixel; None ; None; i2
+FP_Sample; Granule sample of fire pixel; None ; None; i2
+FP_Bowtie; Fraction of bowtie effect; None; None; f4
+Static_flag; Static source flag; None; None; i1
+FP_combined_land_type; Combined land type; None; 1: Evergreen Needleleaf Forests, 2: Evergreen Broadleaf Forests, 3: Deciduous Needleleaf Forests, 4: Deciduous Broadleaf Forests, 5: Mixed Forests, 6: Closed Shrublands, 7: Open Shrublands, 8: Woody Savannas, 9: Savannas, 10: Grasslands, 11: Permanent Wetlands, 12: Croplands, 13: Urban and Built-up Lands, 14: Cropland/Natural Vegetation Mosaics, 15: Permanent Snow and Ice, 16: Barren, 17: Water Bodies, 101: Static flag, 102: Gas flaring, 255: Unclassified; i1
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# State output
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+t_s_low; lower bound of the t_s HDI; K; None; f4
+t_s_upp; upper bound of the t_s HDI; K; None; f4
+t_s_mean; mean of the t_s; K; None; f4
+t_s_mode; mode of the t_s; K; None; f4
+t_s_sd; standard deviation of the t_s; K; None; f4
+p_s_low; lower bound of the p_s HDI; None; None; f4
+p_s_upp; upper bound of the p_s HDI; None; None; f4
+p_s_mean; mean of the p_s; None; None; f4
+p_s_mode; mode of the p_s; None; None; f4
+p_s_sd; standard deviation of the p_s; None; None; f4
+t_f_low; lower bound of the t_f HDI; K; None; f4
+t_f_upp; upper bound of the t_f HDI; K; None; f4
+t_f_mean; mean of the t_f; K; None; f4
+t_f_mode; mode of the t_f; K; None; f4
+t_f_sd; standard deviation of the t_f; K; None; f4
+p_f_low; lower bound of the p_f HDI; None; None; f4
+p_f_upp; upper bound of the p_f HDI; None; None; f4
+p_f_mean; mean of the p_f; None; None; f4
+p_f_mode; mode of the p_f; None; None; f4
+p_f_sd; standard deviation of the p_f; None; None; f4
+FP_Power_T_low; lower bound of the FP_Power_T HDI; MW; None; f4
+FP_Power_T_upp; upper bound of the FP_Power_T HDI; MW; None; f4
+FP_Power_T_mean; mean of the FP_Power_T; MW; None; f4
+FP_Power_T_mode; mode of the FP_Power_T; MW; None; f4
+FP_Power_T_sd; standard deviation of the FP_Power_T; MW; None; f4
+FP_Power_F_low; lower bound of the flaming FRP HDI; MW; None; f4
+FP_Power_F_upp; upper bound of the flaming FRP HDI; MW; None; f4
+FP_Power_F_mean; mean of the flaming FRP; MW; None; f4
+FP_Power_F_mode; mode of the flaming FRP; MW; None; f4
+FP_Power_F_sd; standard deviation of the flaming FRP; MW; None; f4
+FP_Power_S_low; lower bound of the smoldering FRP HDI; MW; None; f4
+FP_Power_S_upp; upper bound of the smoldering FRP HDI; MW; None; f4
+FP_Power_S_mean; mean of the smoldering FRP; MW; None; f4
+FP_Power_S_mode; mode of the smoldering FRP; MW; None; f4
+FP_Power_S_sd; standard deviation of the smoldering FRP; MW; None; f4
+
+
+
+
+
+

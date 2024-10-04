@@ -9,7 +9,7 @@ import os
 import numpy as np
 import glob
 #-----------------------------------------------------------------------
-def get_dnb_clt(modData, clt_var, time, namelist): 
+def get_dnb_clt(modData, clt_var, time, namelist, verbose = False): 
 	'''
 	Function to prepare the DNB climatologies...
 	-----------
@@ -98,7 +98,7 @@ def get_dnb_clt(modData, clt_var, time, namelist):
 # 		if os.path.exists(filename[0]):
 		filename = glob.glob( NTL_DIR + '*' + NTL_PREFIX + '*' + NTL_JDN + '.' + tile + '*.nc' )
 		if len(filename)>0:
-			nc_data    =  FILDA_IO.read_nc(filename[0], clt_var)
+			nc_data    =  FILDA_IO.read_nc(filename[0], clt_var, verbose)
 			hIdx = hh - hidMin 
 			vIdx = vv - vidMin
 			for key in nc_data.keys():
