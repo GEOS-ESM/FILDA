@@ -17,14 +17,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-## [v1.0 2024-10-01]
+## [v1.0 2024-10-04]
 
 ### Added
-- Add the multi-spectrum biphasic fire parameter package
+- Renamed MCBEF package
+- Add option in the namelist to choose uniform distribution as prior
 ### Changed
-
+- Rename package from MBFPE to MCBEF
 ### Fixed
-- Fix bugs of FILDA2
+- Fix minor typo in the metadata 
 ### Removed
-
+- Old MBFPE package
 ### Deprecated

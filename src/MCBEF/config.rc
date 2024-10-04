@@ -1,0 +1,42 @@
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# mapping of the variables
+Background Band: sel_bg_bands, op_list
+Fire Band: sel_fire_bands, op_list
+Number of Trace: num_trace, op_int
+Number of Draw: num_draw, op_int
+Number of Tune: num_tune, op_int
+Number of Chain: num_chain, op_int
+Number of Core: num_core, op_int
+Emissivity NRT: flag_emit, op_bool
+Gradient Sampling?: flag_grad_sampling, op_bool
+Turn on debug printout?: flag_verbose, op_bool
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Root data directory: input_path, op_string
+Run directory: run_directory, op_string
+Output directory: output_path, op_string
+Output version: version, op_string
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+Background mean: mean_tb, op_float
+Background sigma: sigma_tb, op_float
+Smoldering T mean: mean_ts, op_float
+Smoldering T sigma: sigma_ts, op_float
+Flaming T mean: mean_tf, op_float
+Flaming T sigma: sigma_tf, op_float
+Smoldering P mean: mean_ps, op_float
+Smoldering P sigma: sigma_ps, op_float
+Flaming P mean: mean_pf, op_float
+Flaming P sigma: sigma_pf, op_float
+T mean: mean_t, op_float
+T sigma: sigma_t, op_float
+P mean: mean_p, op_float
+P sigma: sigma_p, op_float
+WV Scale factor mean: mean_C, op_float
+WV Scale factor sigma: sigma_C, op_float
+FRP threshold: thd_frp, op_float
+FRP sigma scale factor: frp_sigma_scale, op_float
+Background SNR: SNR_bg, op_dict
+Fire SNR: SNR_fire, op_dict
+Prior distribution: flag_dist, op_string
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+# mapping formatting identifier
+symb_cont: -->, None
