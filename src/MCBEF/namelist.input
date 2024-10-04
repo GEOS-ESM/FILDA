@@ -7,6 +7,7 @@ Number of Draw          : 1000
 Number of Tune          : 2000
 Number of Chain         : 2
 Number of Core          : 70
+Prior distribution      : U
 Emissivity NRT          : T
 Gradient Sampling?      : F
 Turn on debug printout? : F
@@ -22,21 +23,20 @@ Background mean         : 300.0
 Background sigma        : 10.0
 Smoldering T mean       : 500.0
 Smoldering T sigma      : 150.0
-Flaming T mean          : 900.0
-Flaming T sigma         : 250.0
-Smoldering P mean       : 0.1
-Smoldering P sigma      : 0.1
-Flaming P mean          : 0.01
-Flaming P sigma         : 0.01
-T mean                  : 1225.0
-T sigma                 : 500.0
-P mean                  : 0.1
-P sigma                 : 0.1
+Flaming T mean          : 1250.0
+Flaming T sigma         : 600.0
+Smoldering P mean       : 0.2
+Smoldering P sigma      : 0.2
+Flaming P mean          : 0.05
+Flaming P sigma         : 0.05
+T mean                  : 1075.0
+T sigma                 : 725.0
+P mean                  : 0.2
+P sigma                 : 0.2
 WV Scale factor mean    : 0.5
 WV Scale factor sigma   : 0.5
 FRP threshold           : 0
 FRP sigma scale factor  : 0.2
-Prior distribution      : U
 Background SNR          : DNB=6 M11=30 M12=40 M13=30
                      -->: M14=60 M15=60 M16=60 I05=60
 Fire SNR                : DNB=6 M11=70 M12=30 M13=70
