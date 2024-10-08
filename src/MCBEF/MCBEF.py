@@ -771,6 +771,11 @@ def MCBEF_MP(nl, data_bg, data_fire,
 	len_array = np.arange(0, len(data_fire))
 	sub_arrays_list = split_array(len_array, nl.num_core)
 	
+	# MZ Oct 7 2024, provide an option to automatically determine 
+	# the number of core used in MP process
+	if nl.num_core == -1:
+		nl.num_core = (multiprocessing.cpu_count() - 4)
+	
 	pool = Pool(processes=nl.num_core)
 	
 	func = partial(estimate_batch,

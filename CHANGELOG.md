@@ -17,16 +17,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-## [v1.0 2024-10-04]
+## [v1.0 2024-10-08]
 
 ### Added
-- Renamed MCBEF package
-- Add option in the namelist to choose uniform distribution as prior
+- Add Option to determine the number of core in MP automatically
+
 ### Changed
-- Rename package from MBFPE to MCBEF
-- Update namelist
+- Change the license of MCBEF package to Apache 2.0
+
 ### Fixed
-- Fix minor typo in the metadata 
+
 ### Removed
 - Old MBFPE package
+
 ### Deprecated

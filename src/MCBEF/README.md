@@ -1,8 +1,9 @@
 
-# MCBEF
-Monte Carlo Biphasic Estimation of Fire Properties (MCBEF)
 
-The MCBEF is an algorithm implementation to utilizes multiple fire-sensitive 
+# McBEF
+Monte Carlo Biphasic Estimation of Fire Properties (McBEF)
+
+The McBEF is an algorithm implementation to utilizes multiple fire-sensitive 
 channels from visible to thermal infrared, available on advanced sensors 
 like the Visible Infrared Imaging Radiometer Suite (VIIRS) and Geostationary
  Operational Environmental Satellite (GOES) for sub-pixel fire flaming and smoldering
@@ -10,16 +11,15 @@ like the Visible Infrared Imaging Radiometer Suite (VIIRS) and Geostationary
   
 ##  - **Recent update** - 
 
-1. Rename package from MBFPE to MCBEF
-2. Add option in the namelist to choose uniform distribution as prior
-3. Fix minor typo in the metadata 
+1. Add Option to determine the number of core in MP automatically
+2. Change the license of MCBEF package to Apache 2.0
 
 ## Table of content
 
 
 - [Package Dependence](#package-dependence)
 
-- [How to use MCBEF](#how-to-use-MCBEF)
+- [How to use McBEF](#how-to-use-McBEF)
 	- [Forward processing](#Forward-processing)
 	- [Reprocessing](#Reprocessing)
 
@@ -44,7 +44,7 @@ like the Visible Infrared Imaging Radiometer Suite (VIIRS) and Geostationary
 
 **NOTE**:
 
-The MCBEF was originally developed using the PyMC3 framework, which is the 3.0 version of the PyMC project, utilizing Theano as its tensor backend.
+The McBEF was originally developed using the PyMC3 framework, which is the 3.0 version of the PyMC project, utilizing Theano as its tensor backend.
 
 The PyMC development team later rebranded the project as PyMC and replaced Theano with Aesara as the tensor backend. More details can be found in the official documentation:
 
@@ -68,13 +68,13 @@ environment to install all the libraries by using the following anaconda command
 conda env create -f MCBEF.yml
 ```
 
-To run MCBEF in the MCBEF python environment, you need to activate the environment using the following command:
+To run McBEF in the McBEF python environment, you need to activate the environment using the following command:
 
 ```
 source activate MCBEF
 ```
 ### Pip
-Alternatively, the list of MCBEF requirements can be installed into a standard python virtual environment and then 
+Alternatively, the list of McBEF requirements can be installed into a standard python virtual environment and then 
 installing the libraries by using the ```pip``` packages insalled. The general steps for this approach are:
 1. Create a new environment
 ```
@@ -89,14 +89,14 @@ installing the libraries by using the ```pip``` packages insalled. The general s
     pip install -r MCBEF.yml
 ```
 
-In both cases, once the environment is created and the requirement are installed, you should be able to implement the MCBEF library.
+In both cases, once the environment is created and the requirement are installed, you should be able to implement the McBEF library.
 
 
-## How to use MCBEF:
+## How to use McBEF:
 
 ### Forward processing
 
-The MCBEF process the VNP47IMG Level2 prdouct at overpass level, as input parameters they are required:
+The McBEF process the VNP47IMG Level2 prdouct at overpass level, as input parameters they are required:
 ```
 - jdn, julian day in the format "AYYYYDDD", e.g. "A2022006"
 - overpass_beg, start time in the format "HHMM", e.g. "0018"
@@ -117,7 +117,7 @@ python main_reprocessing.py A2019213 0000 2400 VNP
 ```
 
 ## Namelist
-The namelist is the configuration file to control the MCBEF package. There are three blocks in the current namelist, **CONTROL MENU**, **I/O MENU**, **SCIENCE VALUE**. A operational user will only need to mofidy the first and second section. 
+The namelist is the configuration file to control the McBEF package. There are three blocks in the current namelist, **CONTROL MENU**, **I/O MENU**, **SCIENCE VALUE**. A operational user will only need to mofidy the first and second section. 
 
 ### CONTROL MENU
 ```
@@ -141,10 +141,11 @@ Turn on debug printout? : F
  - **Number of Tune**: Number of tuning steps that the sampler will execute before beginning to collect the actual samples.
  - **Number of Chain**: Number of independent Markov Chains that samples will be drawn from.
  - **Number of Core**: Number of cores that allows for multi-processing
+	 - if **-1** is provided, McBEF will get the number of cores within the node (N) and use N-4 as the available cores for multiprocessing
  - **Prior distribution**: Options for the prior distribution, U for uniform distribution, G for Gaussian distribution 
- - **Emissivity NRT**: If **True**, MCBEF will try to find the near-real time VIIRS/NPP Land Surface Temperature (VNP21A2).
- - **Gradient Sampling**: If **True**, MCBEF will use the No U-Turn Sampler ([NUTS](https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.step_methods.hmc.NUTS.html)).
- - **Turn on debug printout?**: If **True**, MCBEF will printout intermediate results. 
+ - **Emissivity NRT**: If **True**, McBEF will try to find the near-real time VIIRS/NPP Land Surface Temperature (VNP21A2).
+ - **Gradient Sampling**: If **True**, McBEF will use the No U-Turn Sampler ([NUTS](https://www.pymc.io/projects/docs/en/stable/api/generated/pymc.step_methods.hmc.NUTS.html)).
+ - **Turn on debug printout?**: If **True**, McBEF will printout intermediate results. 
 ### I/O MENU
 ```
 # BPFPE V1.0 namelist file Aug. 2024, Meng Zhou, Arlindo da Silva
@@ -212,7 +213,7 @@ Below is layout of the input DATA directory, user need to follow this structure 
 ## Runtime
 
 ## License
-[MIT](https://choosealicense.com/licenses/mit/)
+[Apache License Version 2.0](https://choosealicense.com/licenses/apache-2.0/)
 
 ## Institution
 
