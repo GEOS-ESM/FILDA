@@ -30,6 +30,7 @@ T mean: mean_t, op_float
 T sigma: sigma_t, op_float
 P mean: mean_p, op_float
 P sigma: sigma_p, op_float
+P lower bound: p_min, op_float
 WV Scale factor mean: mean_C, op_float
 WV Scale factor sigma: sigma_C, op_float
 FRP threshold: thd_frp, op_float

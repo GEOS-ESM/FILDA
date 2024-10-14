@@ -16,7 +16,7 @@ Turn on debug printout? : F
 Root data directory     : ./DATA/
 Run directory           : ./
 Output directory        : ./
-Output version          : test_Uniform
+Output version          : v_1_0_0
 ------------------------+-----------------------------------------------
 %%%   SCIENCE VALUE  %%%:
 Background mean         : 300.0
@@ -25,14 +25,15 @@ Smoldering T mean       : 500.0
 Smoldering T sigma      : 150.0
 Flaming T mean          : 1250.0
 Flaming T sigma         : 600.0
-Smoldering P mean       : 0.2
-Smoldering P sigma      : 0.2
-Flaming P mean          : 0.05
-Flaming P sigma         : 0.05
-T mean                  : 1075.0
-T sigma                 : 725.0
-P mean                  : 0.2
-P sigma                 : 0.2
+Smoldering P mean       : 0.25
+Smoldering P sigma      : 0.25
+Flaming P mean          : 0.25
+Flaming P sigma         : 0.25
+T mean                  : 1250.0
+T sigma                 : 600
+P mean                  : 0.25
+P sigma                 : 0.25
+P lower bound           : 1e-5
 WV Scale factor mean    : 0.5
 WV Scale factor sigma   : 0.5
 FRP threshold           : 0

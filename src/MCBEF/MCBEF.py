@@ -70,6 +70,7 @@ from functools import partial
 import time
 import sys
 from scipy import stats
+from scipy import interpolate
 import copy
 
 from . import MCBEF_IO as IO # module for reading and writing files
@@ -105,6 +106,8 @@ FLAG_MISSING_FIRE = 102
 FLAG_FAIL_UNIPHASIC = 103
 FLAG_FAIL_BIPHASIC  = 104
 FILLVALUE         = 254
+FILLVALUE_FRP     = np.nan
+
 
 
 class data:
@@ -286,17 +289,33 @@ def init_biphasic_estimation(nl, fss):
 		if is_pymc3:
 			if nl.flag_dist == 'G':
 			
-				PositiveNormal_P = pm.Bound(pm.Normal, lower=0.0)
+				PositiveNormal_P = pm.Bound(pm.Normal, lower=nl.p_min)
+
+# 				PositiveNormal_Ts = pm.Bound(pm.Normal, 
+# 				                             lower=300, 
+# 				                             upper=2200)
+# 				                             
+# 				PositiveNormal_Tf = pm.Bound(pm.Normal,
+# 				                             lower=300, 
+# 				                             upper=2200)				
 				
-				PositiveNormal_T = pm.Bound(pm.Normal, lower=300, upper = 2200)
+				PositiveNormal_Ts = pm.Bound(pm.Normal, 
+				                             lower=nl.mean_ts-nl.sigma_ts, 
+				                             upper=nl.mean_ts+nl.sigma_ts)
+				                             
+				PositiveNormal_Tf = pm.Bound(pm.Normal, 
+				                             lower=nl.mean_tf-nl.sigma_tf, 
+				                             upper=nl.mean_tf+nl.sigma_tf)				
+
 				# Prior for 't_s'
-				t_s = PositiveNormal_T('t_s', mu=nl.mean_ts, sigma=nl.sigma_ts)
+				t_s = PositiveNormal_Ts('t_s', mu=nl.mean_ts, sigma=nl.sigma_ts)
 				# Prior for 't_f'
-				t_f = PositiveNormal_T('t_f', mu=nl.mean_tf, sigma=nl.sigma_tf)
+				t_f = PositiveNormal_Tf('t_f', mu=nl.mean_tf, sigma=nl.sigma_tf)
 				# Prior for 'p_s'  
 				p_s = PositiveNormal_P('p_s', mu=nl.mean_ps, sigma=nl.sigma_ps)
 				# Prior for 'p_f'
 				p_f = PositiveNormal_P('p_f', mu=nl.mean_pf, sigma=nl.sigma_pf)
+				
 			if nl.flag_dist == 'U':
 				# Prior for 't_s'
 				t_s = pm.Uniform('t_s', lower=nl.mean_ts-nl.sigma_ts, 
@@ -305,10 +324,10 @@ def init_biphasic_estimation(nl, fss):
 				t_f = pm.Uniform('t_f', lower=nl.mean_tf-nl.sigma_tf, 
 				                        upper=nl.mean_tf+nl.sigma_tf)
 				# Prior for 'p_s'  
-				p_s = pm.Uniform('p_s', lower=nl.mean_ps-nl.sigma_ps, 
+				p_s = pm.Uniform('p_s', lower=nl.p_min, 
 				                        upper=nl.mean_ps+nl.sigma_ps)
 				# Prior for 'p_f'
-				p_f = pm.Uniform('p_f', lower=nl.mean_pf-nl.sigma_pf, 
+				p_f = pm.Uniform('p_f', lower=nl.p_min, 
 				                        upper=nl.mean_pf+nl.sigma_pf)	
 			
 		else:
@@ -317,9 +336,9 @@ def init_biphasic_estimation(nl, fss):
 				# Prior for 't_f'
 				t_f = pm.TruncatedNormal('t_f', mu=nl.mean_tf, sigma=nl.sigma_tf, lower=300, upper = 2200)
 				# Prior for 'p_s'  
-				p_s = pm.TruncatedNormal('p_s', mu=nl.mean_ps, sigma=nl.sigma_ps, lower=0.0)
+				p_s = pm.TruncatedNormal('p_s', mu=nl.mean_ps, sigma=nl.sigma_ps, lower=nl.p_min)
 				# Prior for 'p_f'
-				p_f = pm.TruncatedNormal('p_f', mu=nl.mean_pf, sigma=nl.sigma_pf, lower=0.0)  			
+				p_f = pm.TruncatedNormal('p_f', mu=nl.mean_pf, sigma=nl.sigma_pf, lower=nl.p_min)  			
 		
 			if nl.flag_dist == 'U':
 				# Prior for 't_s'
@@ -329,10 +348,10 @@ def init_biphasic_estimation(nl, fss):
 				t_f = pm.Uniform('t_f', lower=nl.mean_tf-nl.sigma_tf, 
 				                        upper=nl.mean_tf+nl.sigma_tf)
 				# Prior for 'p_s'  
-				p_s = pm.Uniform('p_s', lower=nl.mean_ps-nl.sigma_ps, 
+				p_s = pm.Uniform('p_s', lower=nl.p_min, 
 				                        upper=nl.mean_ps+nl.sigma_ps)
 				# Prior for 'p_f'
-				p_f = pm.Uniform('p_f', lower=nl.mean_pf-nl.sigma_pf, 
+				p_f = pm.Uniform('p_f', lower=nl.p_min, 
 				                        upper=nl.mean_pf+nl.sigma_pf)
 					
 		# well, I have to use a weird line breaking, to make the line 
@@ -378,20 +397,21 @@ def init_uniphasic_estimation(nl, fss):
 
 		if is_pymc3:
 			if nl.flag_dist == 'G':
-				PositiveNormal_P = pm.Bound(pm.Normal, lower=0.0)
+				PositiveNormal_P = pm.Bound(pm.Normal, lower=nl.p_min)
 				
-				PositiveNormal_T = pm.Bound(pm.Normal, lower=300, upper = 2200)
+				PositiveNormal_T = pm.Bound(pm.Normal, lower=nl.mean_t-nl.sigma_t, \
+				                            upper = nl.mean_t+nl.sigma_t)
 				# Prior for 't_mean'
 				t_mean = PositiveNormal_T('t_mean', mu=nl.mean_t, sigma=nl.sigma_t)
 				# Prior for 'p_f'
 				p_mean = PositiveNormal_P('p_mean', mu=nl.mean_p, sigma=nl.sigma_p)
 
 			if nl.flag_dist == 'U':
-				# Prior for 't_s'
+				# Prior for 't_mean'
 				t_mean = pm.Uniform('t_mean', lower=nl.mean_t-nl.sigma_t, 
 				                              upper=nl.mean_t+nl.sigma_t)
-				# Prior for 't_f'
-				p_mean = pm.Uniform('p_mean', lower=nl.mean_p-nl.sigma_p, 
+				# Prior for 'p_mean'
+				p_mean = pm.Uniform('p_mean', lower=nl.p_min, 
 				                              upper=nl.mean_p+nl.sigma_p)
 
 			
@@ -399,14 +419,14 @@ def init_uniphasic_estimation(nl, fss):
 			if nl.flag_dist == 'G':
 				t_mean = pm.TruncatedNormal('t_mean', mu=nl.mean_t, sigma=nl.sigma_t, lower=300, upper = 2200)
 				# Prior for 'p_f'
-				p_mean = pm.TruncatedNormal('p_mean', mu=nl.mean_p, sigma=nl.sigma_p, lower=0.0)
+				p_mean = pm.TruncatedNormal('p_mean', mu=nl.mean_p, sigma=nl.sigma_p, lower=nl.p_min)
 				
 			if nl.flag_dist == 'U':
 				# Prior for 't_s'
 				t_mean = pm.Uniform('t_mean', lower=nl.mean_t-nl.sigma_t, 
 				                              upper=nl.mean_t+nl.sigma_t)
 				# Prior for 't_f'
-				p_mean = pm.Uniform('p_mean', lower=nl.mean_p-nl.sigma_p, 
+				p_mean = pm.Uniform('p_mean', lower=nl.p_min, 
 				                              upper=nl.mean_p+nl.sigma_p)
 
 		# well, I have to use a weird line breaking, to make the line 
@@ -470,6 +490,7 @@ def swap_variables(data_dict, key1, key2):
 	"""
 	data_dict[key1], data_dict[key2] = data_dict[key2], data_dict[key1]
 	return data_dict
+	
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 def estimate_fire(estimator, nl, ts_fire, fire_obs, verbose = 0):
 	'''	
@@ -618,17 +639,17 @@ def estimate_one(nl, i, data_bg, data_fire,
 	if bowtie>0.1:
 		message = f"Bowtie detection at {i}"
 		printf(message, 1, prefix = 'MCBEF')
-		return FILLVALUE, FILLVALUE, FLAG_BOWTIE
+		return FILLVALUE, FILLVALUE, FILLVALUE_FRP, FLAG_BOWTIE
 	
 	if not is_valid_data(bg_obs):
 		message = f"Invalid background data encountered at {i}"
 		printf(message, 1, prefix = 'MCBEF')
-		return FILLVALUE, FILLVALUE, FLAG_MISSING_BG
+		return FILLVALUE, FILLVALUE, FILLVALUE_FRP, FLAG_MISSING_BG
 	
 	if not is_valid_data(fire_obs):
 		message = f"Invalid fire data encountered at {i}"
 		printf(message, 1, prefix = 'MCBEF')	
-		return FILLVALUE, FILLVALUE, FLAG_MISSING_FIRE
+		return FILLVALUE, FILLVALUE, FILLVALUE_FRP, FLAG_MISSING_FIRE
 
 	# - - - - - - - - - - - -
 	# estimate the background temperature and scaling factor
@@ -650,19 +671,34 @@ def estimate_one(nl, i, data_bg, data_fire,
 	# FRP correction
 	frp_idx = nl.sel_fire_bands.index('M13')
 	product = np.exp(-(fire_obs['C']*fss.tau_wvp+fss.tau_other_gas) \
-	                 / np.cos(np.deg2rad(fire_obs['vza'])) ) * fss.rsr
+					 / np.cos(np.deg2rad(fire_obs['vza'])) ) * fss.rsr
 	tt = np.trapz(product, fss.lambdas, axis = 1)/\
-	     np.trapz(fss.rsr, fss.lambdas, axis = 1)
+		 np.trapz(fss.rsr, fss.lambdas, axis = 1)
+	wl_fire = np.nanmean(fss.lambdas, axis = 1)
+# 	print('wl_fire', wl_fire, tt)
+	correct_rad = fire_obs['obs']/tt
 	
-	FRP_correct = data_fire[i][4]/tt[frp_idx]
+# 	print(f'correct_rad, {correct_rad}')
 	
-	fire_obs['frp']       = FRP_correct * 1.1
+	f_function = interpolate.interp1d(wl_fire, correct_rad)
+	inter_wl = np.linspace(wl_fire[0], wl_fire[-1], 200)
+	inter_rad = f_function(inter_wl) 
+	irrad = np.trapz(inter_rad, inter_wl)
+	# 	print('FRP area under the curve', )
+	FRP_correct = irrad*data_fire[i][3]*2*np.pi*1e-6
+	
+	FPR_R_AC = data_fire[i][4]/tt[frp_idx]
+	# 	print('FRP_correct', FRP_correct)
+	
+	# 	fire_obs['obs_sigma'] = fire_obs['obs_sigma']/tt
+	fire_obs['frp']       = FPR_R_AC * 1.2
+	# 	fire_obs['frp']       = FPR_R_AC*0.8 + FRP_correct * 0.2 # * 1.1
 	fire_obs['frp_sigma'] = fire_obs['frp'] * nl.frp_sigma_scale
 	
 
     # - - - - - - - - - - - -
 	# draw samples...
-	if (fire_obs['frp'] > nl.thd_frp) & (flag_gas_flaring <=0) & (flag_static <=0): # 
+	if (fire_obs['frp'] > nl.thd_frp) & (flag_gas_flaring <=0) : # & (flag_static <=0)
 		
 		try:
 			flag_mode = FLAG_BIPHASIC
@@ -682,7 +718,7 @@ def estimate_one(nl, i, data_bg, data_fire,
 				flag_mode = FLAG_FAIL_BIPHASIC
 				message = f"WARINING!! Fail biphasic at {i}"
 				printf(message, 1, prefix = 'MCBEF')
-				return FILLVALUE, FILLVALUE, flag_mode
+				return FILLVALUE, FILLVALUE, FILLVALUE_FRP, flag_mode
 
 	else:
 		try:
@@ -694,12 +730,12 @@ def estimate_one(nl, i, data_bg, data_fire,
 			flag_mode = FLAG_FAIL_UNIPHASIC
 			message = f"WARINING!! Fail uniphasic at {i}"
 			printf(message, 1, prefix = 'MCBEF')
-			return FILLVALUE, FILLVALUE, flag_mode
+			return FILLVALUE, FILLVALUE, FILLVALUE_FRP, flag_mode
 		
 # 	est_bg = None
 # 	trace = None
 # 	flag_mode = None
-	return est_bg, trace, flag_mode
+	return est_bg, trace, FPR_R_AC, flag_mode
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 def split_array(len_array, processes_n):
@@ -738,18 +774,19 @@ def estimate_batch(nl, data_bg, data_fire,
                    bgs, fss, interest_pos):
 
 	rows = interest_pos[1] - interest_pos[0]
-	result = dict(x=[], est_bg = [], trace = [], time = [], status=[])    
+	result = dict(x=[], est_bg = [], trace = [], time = [], status=[], FPR_R_AC=[])    
 	
 	for this_point in range(interest_pos[0], interest_pos[1]):
 	
 		start_time = time.time()
-		est_bg, trace, flag_mode = estimate_one(nl, this_point, data_bg, 
-												data_fire, bg_estimator, 
-												biphase_estimator, 
-												uniphase_estimator,
-												ts_bg, ts_bi_fire, ts_uni_fire,
-												bgs, fss, 
-												verbose = nl.flag_verbose)
+		# MZ add atmospheric corrected (AC) FRP output
+		est_bg, trace, FPR_R_AC, flag_mode = estimate_one(nl, this_point, data_bg, 
+												 data_fire, bg_estimator, 
+												 biphase_estimator, 
+												 uniphase_estimator,
+												 ts_bg, ts_bi_fire, ts_uni_fire,
+												 bgs, fss, 
+												 verbose = nl.flag_verbose)
 		end_time = time.time()  # End time measurement
 		execution_time = end_time - start_time  # Calculate execution time
 		print(f" - Execution time: {this_point} {execution_time:4.2f} seconds\n")
@@ -759,6 +796,7 @@ def estimate_batch(nl, data_bg, data_fire,
 		result['est_bg'].append(est_bg)
 		result['trace'].append(trace)
 		result['status'].append(flag_mode)
+		result['FPR_R_AC'].append(FPR_R_AC)
 	
 	return result
 
@@ -791,13 +829,14 @@ def MCBEF_MP(nl, data_bg, data_fire,
 	
 	output = {}
 	for item in result:
-		for i, tr, ti, bg, st in zip(item['x'],    item['trace'], 
-									 item['time'], item['est_bg'], 
-									 item['status']):
+		for i, tr, ti, bg, frp, st in zip(item['x'],    item['trace'], 
+									      item['time'], item['est_bg'], 
+									      item['FPR_R_AC'], item['status']):
 			output[i] = {}
 			output[i]['trace'] = tr
 			output[i]['time'] = ti
 			output[i]['est_bg'] = bg
+			output[i]['FP_Power_R_AC'] = frp
 			output[i]['status'] = st
 	
 	return output
@@ -897,11 +936,13 @@ def get_state_output(array_dict, filda_dict):
 		if array_dict[key].ndim == 1:
 			state_dict[key] = array_dict[key]
 	
-	params = ['FP_confidence', 'FP_Land_Type', 'FP_Gas_Flaring', 'Static_flag',
-			  'FP_Peatland', 'FP_Peatfrac', 'FP_SAA_flag', 'FP_Latitude',
-			  'FP_Longitude','FP_Area', 'FP_Line', 'FP_Sample', 'FP_Bowtie']
+	params = ['FP_confidence', 'FP_Land_Type', 'FP_Gas_Flaring', 
+	          'Static_flag', 'FP_Peatland', 'FP_Peatfrac', 
+	          'FP_SAA_flag', 'FP_Latitude', 'FP_Longitude','FP_Area', 
+	          'FP_Line', 'FP_Sample', 'FP_Bowtie']
 	for param in params:
-		state_dict[param] = filda_dict[param].values    
+		state_dict[param] = filda_dict[param].values
+		 
 	state_dict['FP_Power_R'] = filda_dict['FP_Power'].values
 	state_dict['overpass'] = ST.convert_to_interval_index(filda_dict['overpass'].values)
 	
@@ -929,6 +970,7 @@ def post_processing(filda_dict, result, nl):
 	array_dict['t_b']       = np.full(n_fire, np.nan)
 	array_dict['C']         = np.full(n_fire, np.nan)
 	array_dict['QA_flag']   = np.full(n_fire, np.nan)
+	array_dict['FP_Power_R_AC']   = np.full(n_fire, np.nan)
 	array_dict['t_s']        = np.full( (n_fire, n_samples), np.nan)
 	array_dict['p_s']        = np.full( (n_fire, n_samples), np.nan)
 	array_dict['t_f']        = np.full( (n_fire, n_samples), np.nan)
@@ -943,6 +985,7 @@ def post_processing(filda_dict, result, nl):
 	
 		qa = int(result[i]['status'])
 		array_dict['QA_flag'][i] = qa
+		array_dict['FP_Power_R_AC'][i] = result[i]['FP_Power_R_AC']
 		area = filda_dict['FP_Area'].values[i]
 		
 		if qa >= 100:
@@ -968,6 +1011,7 @@ def post_processing(filda_dict, result, nl):
 				array_dict['p_s'][i, :] = result[i]['trace']['p_s'] 
 				array_dict['t_f'][i, :] = result[i]['trace']['t_f']
 				array_dict['p_f'][i, :] = result[i]['trace']['p_f']
+				
 				array_dict['FP_Power_T'][i, :] = area *sigma* \
 				(result[i]['trace']['t_s']**4 * result[i]['trace']['p_s'] + \
 				 result[i]['trace']['t_f']**4 * result[i]['trace']['p_f']) * 1e-6

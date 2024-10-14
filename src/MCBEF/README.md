@@ -1,5 +1,6 @@
 
 
+
 # McBEF
 Monte Carlo Biphasic Estimation of Fire Properties (McBEF)
 
@@ -11,8 +12,14 @@ like the Visible Infrared Imaging Radiometer Suite (VIIRS) and Geostationary
   
 ##  - **Recent update** - 
 
-1. Add Option to determine the number of core in MP automatically
-2. Change the license of MCBEF package to Apache 2.0
+1. Add VIIRS M10, M08 sensor data for the estimation
+2. Add a science value **P lower bound** to specify the minimal values for the fire fraction
+3. Add output of FP_Power_R_AC. Radiance based FRP estimation with atmospheric correction
+4. Redefine the prior for the uni-phasic model
+5. Redefine the selection of fire model for the estimation
+	- McBEF now will first attempt to use bi-phasic model for parameter estimates for all the input regardless of the **Gas flaring** or **Static source** flag. If fail, it will then try the uni-phasic model for the estimation.
+
+	
 
 ## Table of content
 

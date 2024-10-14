@@ -84,7 +84,7 @@ def do_eval_background(est_bg, ts_fire, fss):
 
 def do_eval(nl, ts_bg, ts_bi_fire, ts_uni_fire, bgs, fss, 
 		    this_point, data_bg, data_fire, 
-		    est_bg, est_fire,
+		    est_bg, est_fire, filda_dict,
 		    savename='eval.png'):
 
 	wl_fire = np.nanmean(fss.lambdas, axis = 1)
@@ -101,8 +101,10 @@ def do_eval(nl, ts_bg, ts_bi_fire, ts_uni_fire, bgs, fss,
 		eval_fire  = do_eval_biphasic(est_fire, ts_bi_fire, fss)
 		eval_background = do_eval_background(est_bg, ts_bi_fire, fss)
 		title = f'Biphasic evaluation'
-		
-		
+	
+	
+	sel_fire_bg_band_lst = ['FP_' + band + '_Rad_Mean' for band in nl.sel_fire_bands]
+	bg_obs_fire = filda_dict[sel_fire_bg_band_lst].values[this_point, :]
 
 	model_sig = eval_background + eval_fire
 	
@@ -112,16 +114,22 @@ def do_eval(nl, ts_bg, ts_bi_fire, ts_uni_fire, bgs, fss,
 	fig, axes = VIS.multiFigure(1, 1, figsize = (4.5,3))
 	
 	axes[0].plot(wl_bg, eval_background_2, color = 'C4', 
-	             label = 'Modeled background rad')
-	axes[0].plot(wl_bg, bg_obs, color = 'C0', 
-	             label = 'Obs. background rad')
+				 label = 'Modeled background rad')
+	axes[0].plot(wl_fire, bg_obs_fire, color = 'C0', 
+				 label = 'Obs. background rad')
 	
 	axes[0].plot(wl_fire, model_sig, color = 'C1', lw=2,
-	             label = 'Modeled signal', zorder = 10)
+				 label = 'Modeled signal', zorder = 10)
 	axes[0].plot(wl_fire, fire_obs, color = 'C3', lw=2, 
-	             label = 'Obs. signal', zorder = 10)
+				 label = 'Obs. signal', zorder = 10)
+	
+	axes[0].plot(wl_fire, eval_fire, color = 'C1', lw=2, ls = '--', 
+				 label = 'Modeled fire signal', zorder = 10)
+	axes[0].plot(wl_fire, fire_obs-bg_obs_fire, color = 'C3', lw=2, 
+	             ls = '--', marker = '.', markersize = 8, 
+				 label = 'Obs. fire signal', zorder = 10)
 
-	axes[0].set_ylabel('Radiance (W$\cdot$ m$^{-2} \cdot\mu$m$^{-2}$)')
+	axes[0].set_ylabel('Radiance (W$\cdot$ m$^{-2} \cdot\mu$m$^{-2}$sr$^{-1}$ )')
 	axes[0].set_xlabel('Wavelength ($\mu m$)')
 	axes[0].legend(frameon = False, bbox_to_anchor=(1, 0.7))
 

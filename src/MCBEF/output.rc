@@ -17,6 +17,7 @@ overpass; Index of the overpass time by very 6 minutes; None ; None; i2
 # Inherent from FILDA & other dataset
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 FP_Power_R; Radiance based FRP estimation; MW; None; f4
+FP_Power_R_AC; Radiance based FRP estimation with atmospheric correction; MW; None; f4
 FP_confidence; FILDA detection confidence; None; Refer to FILDA ATBD; i1
 FP_Land_Type; MODIS Land cover product MCD12C1; None;  None; i1
 FP_Gas_Flaring; Gas Flaring flag; None; 0: Unknown, 1: Gas flaring pixel; i1
