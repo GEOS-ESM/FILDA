@@ -238,7 +238,7 @@ def init_background_estimation(nl, bgs):
     # Define some pseudo values as placeholders to define the MCMC model
     # Placeholders means it will only be used to create the computation 
     # graph, Those values will be updated for each real case
-
+	printf(f'Define tensor for Background estimator...', 1, prefix = 'MCBEF')
 	ts_bg = TensorSettings(nl.sel_bg_bands)
 	
 	ts_bg.C.set_value(nl.mean_C)
@@ -249,10 +249,14 @@ def init_background_estimation(nl, bgs):
 
 
 	with pm.Model() as bg_estimator:
+	
+		PositiveNormal_C = pm.Bound(pm.Normal, lower=0)
+	
 		# Prior for 't_b'
 		t_b = pm.Normal('t_b', mu=ts_bg.tb, sigma=ts_bg.tb_sigma)
 		# Prior for 'C'
-		C   = pm.Normal('C',   mu=ts_bg.C,  sigma=ts_bg.C_sigma)
+		C   = pm.Normal('C', mu=ts_bg.C, sigma=ts_bg.C_sigma)
+# 		C   = PositiveNormal_C('C', mu=ts_bg.C, sigma=ts_bg.C_sigma)
 		
 		# well, I have to use a weird line breaking, to make the line 
 		# shorter for reading
@@ -282,6 +286,8 @@ def init_biphasic_estimation(nl, fss):
 	# Define some pseudo values as placeholders to define the MCMC model
 	# Placeholders means it will only be used to create the computation 
 	# graph, Those values will be updated for each real case
+
+	printf(f'Define tensor for Biphasic estimator...', 1, prefix = 'MCBEF')
 	ts_bi_fire = TensorSettings(nl.sel_fire_bands)
 
 	with pm.Model() as biphase_estimator:
@@ -476,6 +482,65 @@ def estimate_bg(bg_estimator, nl, ts_bg, bg_obs, verbose = 0):
 	return map_estimate
 	
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+def precompile(nl, dummy_dict, 
+               bg_estimator, biphase_estimator, uniphase_estimator, 
+               ts_bg, ts_bi_fire, ts_uni_fire,bgs, fss):
+              
+	# define two dataset object for data processing
+	data_fire, data_bg = get_sample_set(dummy_dict, nl)
+	
+	this_point = 0
+	bg_obs = {
+		'obs': data_bg[this_point][0],
+		'obs_sigma': data_bg[this_point][1],
+		'vza': data_bg[this_point][2],
+		'emit': data_bg[this_point][4],
+		'lst': data_bg[this_point][5],
+		'lst_sigma': data_bg[this_point][6]
+	}
+	
+	fire_obs = {
+		'obs': data_fire[this_point][0],
+		'obs_sigma': data_fire[this_point][1],
+		'vza': data_fire[this_point][2],
+		'area': data_fire[this_point][3]
+	}
+	
+	flag_gas_flaring = data_fire[this_point][5]
+	flag_static = data_fire[this_point][6]
+	bowtie = data_fire[this_point][7]
+	
+	try:
+		print(' - MCBEF: Compiling background estimator')
+		est_bg = estimate_bg(bg_estimator, nl, ts_bg, bg_obs, 
+							 verbose = 1)
+	except (pm.exceptions.SamplingError, RuntimeError) as e:
+		print(' - MCBEF: Fail on compile background estimator')
+	
+	# update the estimated scaling factor
+	fire_obs['C'] = est_bg['C']
+	fire_obs['frp']       = data_fire[this_point][4] * 1.2
+	fire_obs['frp_sigma'] = fire_obs['frp'] * nl.frp_sigma_scale
+	
+	try:
+		print(' - MCBEF: Compiling biphasic estimator')
+		trace =  estimate_fire(biphase_estimator, nl, ts_bi_fire, fire_obs, 
+							   verbose = 1)
+	except (pm.exceptions.SamplingError, RuntimeError) as e:
+		print(' - MCBEF: Fail on compile biphasic estimator')
+		
+		
+	try:
+		print(' - MCBEF: Compiling uniphasic estimator')
+		trace = estimate_fire(uniphase_estimator, nl, ts_uni_fire, fire_obs, 
+							  verbose = 1)
+	except (pm.exceptions.SamplingError, RuntimeError) as e:
+		print(' - MCBEF: Fail on compile uniphasic estimator')
+	
+	return
+
+	
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 def swap_variables(data_dict, key1, key2):
 	"""
 	Swap the values of key1 and key2 in data_dict.
@@ -667,28 +732,31 @@ def estimate_one(nl, i, data_bg, data_fire,
 	# update the estimated scaling factor
 	fire_obs['C'] = est_bg['C']
 	
-	# - - - - - - - - - - - -
-	# FRP correction
-	frp_idx = nl.sel_fire_bands.index('M13')
+	# - - - - - - - - - - - - - - -
+	# FRP Atmospheric Correction AC
+	# - - - - - - - - - - - - - - -
 	product = np.exp(-(fire_obs['C']*fss.tau_wvp+fss.tau_other_gas) \
 					 / np.cos(np.deg2rad(fire_obs['vza'])) ) * fss.rsr
+					 
+	# transmittance of each fire band
 	tt = np.trapz(product, fss.lambdas, axis = 1)/\
 		 np.trapz(fss.rsr, fss.lambdas, axis = 1)
+	# central wavelength of each fire band
 	wl_fire = np.nanmean(fss.lambdas, axis = 1)
-# 	print('wl_fire', wl_fire, tt)
+	
 	correct_rad = fire_obs['obs']/tt
-	
-# 	print(f'correct_rad, {correct_rad}')
-	
+
+	# we can also do integration under the curve to get the FRP
 	f_function = interpolate.interp1d(wl_fire, correct_rad)
 	inter_wl = np.linspace(wl_fire[0], wl_fire[-1], 200)
 	inter_rad = f_function(inter_wl) 
 	irrad = np.trapz(inter_rad, inter_wl)
-	# 	print('FRP area under the curve', )
+	# FRP, area under the curve
 	FRP_correct = irrad*data_fire[i][3]*2*np.pi*1e-6
 	
+	# FRP, Wooster + AC
+	frp_idx = nl.sel_fire_bands.index('M13')
 	FPR_R_AC = data_fire[i][4]/tt[frp_idx]
-	# 	print('FRP_correct', FRP_correct)
 	
 	# 	fire_obs['obs_sigma'] = fire_obs['obs_sigma']/tt
 	fire_obs['frp']       = FPR_R_AC * 1.2
@@ -698,7 +766,7 @@ def estimate_one(nl, i, data_bg, data_fire,
 
     # - - - - - - - - - - - -
 	# draw samples...
-	if (fire_obs['frp'] > nl.thd_frp) & (flag_gas_flaring <=0) : # & (flag_static <=0)
+	if (fire_obs['frp'] > nl.thd_frp): # & (flag_gas_flaring <=0) & (flag_static <=0):
 		
 		try:
 			flag_mode = FLAG_BIPHASIC
@@ -807,13 +875,14 @@ def MCBEF_MP(nl, data_bg, data_fire,
              bgs, fss):
 
 	len_array = np.arange(0, len(data_fire))
-	sub_arrays_list = split_array(len_array, nl.num_core)
 	
 	# MZ Oct 7 2024, provide an option to automatically determine 
 	# the number of core used in MP process
 	if nl.num_core == -1:
-		nl.num_core = (multiprocessing.cpu_count() - 4)
-	
+		nl.num_core = int(multiprocessing.cpu_count() - 5)
+
+	sub_arrays_list = split_array(len_array, nl.num_core)
+
 	pool = Pool(processes=nl.num_core)
 	
 	func = partial(estimate_batch,

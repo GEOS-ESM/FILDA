@@ -131,7 +131,16 @@ def read_data_reprocess(nl, tt):
         
     return filda_dict
 
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+def read_data_viirs_dummy(nl):
 
+	input_path = os.path.dirname(os.path.abspath(__file__))
+	# Get the absolute path to the directory where the current 
+	file_temp =  input_path + '/sensor/sensor_viirs_dummy_obs/VIIRS_obs_dummy.csv'
+	
+	filda_dict = pd.read_csv(file_temp)
+	
+	return filda_dict
 	
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 def read_fire_mask(nl, tt):
@@ -209,7 +218,7 @@ def get_surface_emit_sinu(lat, lon, nl, tt, **kwargs):
 	
 	effective_doy = str(int(float(tt.DOY)//8 * 8 + 1))
 	
-	DATA_DIR = nl.input_path + 'VNP21A2' + '/' +  tt.Y + '/' + effective_doy + '/'
+	DATA_DIR = nl.input_path + 'VNP21A2' + '/' +  tt.Y + '/' + effective_doy.zfill(3) + '/'
 	
 	tiles, hidMax, hidMin, vidMax, vidMin = get_tile_sinusoidal_3((lat, lon), numCeil = numCeil)
 	
@@ -226,9 +235,14 @@ def get_surface_emit_sinu(lat, lon, nl, tt, **kwargs):
 	
 		hIdx = hid - hidMin 
 		vIdx = vid - vidMin
+	
 		filename = glob.glob(DATA_DIR + '*' + tile + '*.h5')    
 		if len(filename) == 0:
 			continue
+				
+		if nl.flag_verbose:
+			message = f'Reading {filename[0]}'
+			printf(message, 1, prefix = 'MCBEF_IO')
 	
 		VNP21A2 = read_VNP21A2(filename[0], params)
 	
@@ -255,7 +269,7 @@ def get_surface_emit_sinu(lat, lon, nl, tt, **kwargs):
 	for param in params:
 		band_name = param.split('_')[0] + '_M' + param.split('_')[1]
 		emis_dict[band_name] = data_grid_dict[param][y_id, x_id]
-
+	
 	emis_dict['Emis_I05'] = 0.5*emis_dict['Emis_M15'] + 0.5 * emis_dict['Emis_M16']
 		
 	return emis_dict
@@ -263,65 +277,70 @@ def get_surface_emit_sinu(lat, lon, nl, tt, **kwargs):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 def get_surface_emit_sinu_clt(lat, lon, nl, tt, **kwargs):
- 
-    numCeil = kwargs.get('numCeil', 1200)
-    
-    effective_doy = str(int(float(tt.DOY)//8 * 8 + 1))
 
-    # use the climatology path...
-    DATA_DIR = nl.input_path + 'VNP21A2' + '/CLT/' + effective_doy + '/'
-
-    tiles, hidMax, hidMin, vidMax, vidMin = get_tile_sinusoidal_3((lat, lon), numCeil = numCeil)
-
-    GridDim = ((vidMax - vidMin + 1) * numCeil, (hidMax - hidMin + 1) * numCeil)
-
-    params = ['Emis_14', 'Emis_15', 'Emis_16', 'LST_Day_1KM', 
-              'LST_Night_1KM', 'LST_Day_1KM_STD', 'LST_Night_1KM_STD']
-    
-    data_grid_dict = {} 
-    for param in params:
-        data_grid_dict[param] = np.full(GridDim, np.nan)
-    
-
-    for tile in tiles:
-        hid = int(float(tile[1:3]))
-        vid = int(float(tile[4:]))
-
-        hIdx = hid - hidMin 
-        vIdx = vid - vidMin
-        filename = glob.glob(DATA_DIR + '*' + tile + '*.nc')    
-        if len(filename) == 0:
-            continue
-
-        VNP21A2 = read_VNP21A2_CLT(filename[0], params)
-
-        for param in params:
-            data_grid_dict[param][vIdx * numCeil : (vIdx + 1) * numCeil, \
-                                  hIdx * numCeil : (hIdx + 1) * numCeil, ] = VNP21A2[param]    
-    
-    boundary_tile = 'h' + str(hidMin).zfill(2) + 'v' + str(vidMin).zfill(2)
-    x, y, resol = cal_sinu_xy(boundary_tile, numCeil)
-    x_min = np.nanmin(x)
-    y_max= np.nanmax(y)
-    
-    x_s, y_s = geog_to_sinu([lat, lon])
-    x_id = (x_s - x_min + resol/2.)//resol
-    y_id = (y_max - y_s + resol/2.)//resol
-
-
-    x_id = x_id.astype(int)
-    y_id = y_id.astype(int)
-    emis_dict = {}
-    for param in params:
-        if 'Emis' in param:
-            band_name = param.split('_')[0] + '_M' + param.split('_')[1] + '_CLT'
-            emis_dict[band_name] = data_grid_dict[param][y_id, x_id]
-        else:
-            emis_dict[param] = data_grid_dict[param][y_id, x_id]
-
-    emis_dict['Emis_I05_CLT'] = 0.5*emis_dict['Emis_M15_CLT'] + 0.5 * emis_dict['Emis_M16_CLT']
-  
-    return emis_dict
+	numCeil = kwargs.get('numCeil', 1200)
+	
+	effective_doy = str(int(float(tt.DOY)//8 * 8 + 1))
+	
+	# use the climatology path...
+	DATA_DIR = nl.input_path + 'VNP21A2' + '/CLT/' + effective_doy.zfill(3) + '/'
+	
+	tiles, hidMax, hidMin, vidMax, vidMin = get_tile_sinusoidal_3((lat, lon), numCeil = numCeil)
+	
+	GridDim = ((vidMax - vidMin + 1) * numCeil, (hidMax - hidMin + 1) * numCeil)
+	
+	params = ['Emis_14', 'Emis_15', 'Emis_16', 'LST_Day_1KM', 
+			  'LST_Night_1KM', 'LST_Day_1KM_STD', 'LST_Night_1KM_STD']
+	
+	data_grid_dict = {} 
+	for param in params:
+		data_grid_dict[param] = np.full(GridDim, np.nan)
+	
+	
+	for tile in tiles:
+		hid = int(float(tile[1:3]))
+		vid = int(float(tile[4:]))
+	
+		hIdx = hid - hidMin 
+		vIdx = vid - vidMin
+		
+		filename = glob.glob(DATA_DIR + '*' + tile + '*.nc')    
+		if len(filename) == 0:
+			continue
+				
+		if nl.flag_verbose:
+			message = f'Reading {filename[0]}'
+			printf(message, 1, prefix = 'MCBEF_IO')
+	
+		VNP21A2 = read_VNP21A2_CLT(filename[0], params)
+	
+		for param in params:
+			data_grid_dict[param][vIdx * numCeil : (vIdx + 1) * numCeil, \
+								  hIdx * numCeil : (hIdx + 1) * numCeil, ] = VNP21A2[param]    
+	
+	boundary_tile = 'h' + str(hidMin).zfill(2) + 'v' + str(vidMin).zfill(2)
+	x, y, resol = cal_sinu_xy(boundary_tile, numCeil)
+	x_min = np.nanmin(x)
+	y_max= np.nanmax(y)
+	
+	x_s, y_s = geog_to_sinu([lat, lon])
+	x_id = (x_s - x_min + resol/2.)//resol
+	y_id = (y_max - y_s + resol/2.)//resol
+	
+	
+	x_id = x_id.astype(int)
+	y_id = y_id.astype(int)
+	emis_dict = {}
+	for param in params:
+		if 'Emis' in param:
+			band_name = param.split('_')[0] + '_M' + param.split('_')[1] + '_CLT'
+			emis_dict[band_name] = data_grid_dict[param][y_id, x_id]
+		else:
+			emis_dict[param] = data_grid_dict[param][y_id, x_id]
+	
+	emis_dict['Emis_I05_CLT'] = 0.5*emis_dict['Emis_M15_CLT'] + 0.5 * emis_dict['Emis_M16_CLT']
+	
+	return emis_dict
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

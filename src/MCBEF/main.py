@@ -1,7 +1,10 @@
 import os
 import sys
+import time
+from MCBEF.MCBEF_NAMELIST import *
+import multiprocessing
+multiprocessing.set_start_method('fork')
 print(' - System: a python script has been called with paramters:', sys.argv)
-
 # jdn          = 'A2019213'
 # overpass_beg = '0842'
 # overpass_end = '0849'
@@ -12,20 +15,19 @@ overpass_beg = sys.argv[2]
 overpass_end = sys.argv[3]
 sat 		 = sys.argv[4]
 
+# initialize the namelist for algorithm configuration
+nl = namelist_init('./namelist.input')
 # initiate the compiling path...
-# os.environ['THEANO_FLAGS'] = 'base_compiledir=./THEANO/theano_{}'.format('A2019220')
-os.environ['THEANO_FLAGS'] = f'base_compiledir=./THEANO/theano_{jdn}'
-os.environ['PYTENSOR_FLAGS'] = f'base_compiledir=./PYTENSOR/pytensor_{jdn}'
-
-import pylib.MCBEF.MCBEF as MC
-import numpy as np
-import time
+THEANO_FLAGS = f'{nl.compile_path}_{month}'
+# for pytensor the key is ['PYTENSOR_FLAGS']
+os.environ['THEANO_FLAGS'] = f'base_compiledir={THEANO_FLAGS}' #+f'{nl.precompile_string}'
+import MCBEF.MCBEF as MC
 
 #---------------
 # initialization 
 #---------------
 # initialize the namelist for algorithm configuration
-nl = MC.NL.namelist_init('./namelist.input')
+# nl = MC.NL.namelist_init('./namelist.input')
 
 # initialized the time
 # create the necessary time string needed in the detection
@@ -35,7 +37,7 @@ tt =  MC.ST.init_time(jdn, overpass_beg, overpass_end)
 # preparing PYMC model
 #---------------------
 # initialize the sensor
-v_sensor = MC.SR.viirs()
+v_sensor = MC.SR.viirs(band_list=list(set(nl.sel_bg_bands+nl.sel_fire_bands)))
 
 # define the background sensor (bgs)
 bgs = MC.SR.GetSensor(v_sensor, nl.sel_bg_bands)

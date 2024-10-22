@@ -9,10 +9,12 @@ Number of Chain: num_chain, op_int
 Number of Core: num_core, op_int
 Emissivity NRT: flag_emit, op_bool
 Gradient Sampling?: flag_grad_sampling, op_bool
+Precompile model?: flag_precompile, op_bool
 Turn on debug printout?: flag_verbose, op_bool
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 Root data directory: input_path, op_string
 Run directory: run_directory, op_string
+Compile directory: compile_path, op_string
 Output directory: output_path, op_string
 Output version: version, op_string
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

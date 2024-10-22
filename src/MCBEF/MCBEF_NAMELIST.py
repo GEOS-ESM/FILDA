@@ -103,7 +103,7 @@ import numpy as np
 
 def namelist_init(input_filename):
 	settings = namelist()
-
+	
 	print('- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n')
 	print('   Monte Carlo Biphasic Estimation of Fire Properties (MCBEF) V1.0.1   \n')
 	print('- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n')
@@ -122,7 +122,7 @@ def namelist_init(input_filename):
 						content_dict[key] += ' ' + content
 						# Update current key for potential continuations
 						current_key = key  
-
+	
 				if FORMATWORDS['symb_cont'] in line:
 					content = line.split(':', 1)[1].strip()
 					content_dict[current_key] += ' ' + content
@@ -135,8 +135,33 @@ def namelist_init(input_filename):
 		print(f"Error: The file {input_filename} could not be found.")
 	except Exception as e:
 		print(f"An error occurred: {e}")
+	
+	if os.path.isdir(settings.compile_path) == False:
+		message = f' - MCBEF NAMELIST: Making {settings.compile_path} '
+		print(message)
+		os.mkdir(settings.compile_path)
+	else:
+		message = f' - MCBEF NAMELIST: {settings.compile_path} exists'
+		print(message)	
+	
+	settings.precompile_string=''
+	if settings.flag_precompile:
+		settings.compile_path = settings.compile_path + 'persistent'
+		settings.precompile_string=',compiledir_mode=readonly'
 		
+# 		if os.path.isdir(settings.compile_path) == False:
+# 			message = f' - MCBEF NAMELIST: Making {settings.compile_path} '
+# 			print(message)
+# 			os.mkdir(settings.compile_path)
+# 		else:
+# 			message = f' - MCBEF NAMELIST: {settings.compile_path} exists'
+# 			print(message)
+	
 	return settings
+
+
+
+
 
 
 

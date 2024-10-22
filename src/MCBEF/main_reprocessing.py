@@ -1,28 +1,27 @@
 import os
 import sys
+import time
+from pylib.MCBEF.MCBEF_NAMELIST import *
+import multiprocessing
+multiprocessing.set_start_method('fork')
 print(' - System: a python script has been called with paramters:', sys.argv)
-
-# jdn          = 'A2019213'
-# overpass_beg = '0842'
-# overpass_end = '0849'
-# sat 		 = 'VNP'
 
 jdn          = sys.argv[1]
 overpass_beg = sys.argv[2]
 overpass_end = sys.argv[3]
 sat 		 = sys.argv[4]
-
-# initiate the compiling path...
-os.environ['THEANO_FLAGS'] = f'base_compiledir=./THEANO/theano_{jdn}'
-os.environ['PYTENSOR_FLAGS'] = f'base_compiledir=./PYTENSOR/pytensor_{jdn}'
-
-import pylib.MCBEF.MCBEF as MC
-import numpy as np
-import time
-
+month 		 = sys.argv[5]
 
 # initialize the namelist for algorithm configuration
-nl = MC.NL.namelist_init('./namelist.input')
+nl = namelist_init('./namelist.input')
+# initiate the compiling path...
+THEANO_FLAGS = f'{nl.compile_path}_{month}'
+# for pytensor the key is ['PYTENSOR_FLAGS']
+os.environ['THEANO_FLAGS'] = f'base_compiledir={THEANO_FLAGS}' #+f'{nl.precompile_string}'
+import pylib.MCBEF.MCBEF as MC
+
+# # initialize the namelist for algorithm configuration
+# nl = MC.NL.namelist_init('./namelist.input')
 
 # initialized the time
 # create the necessary time string needed in the detection
@@ -32,12 +31,11 @@ tt =  MC.ST.init_time(jdn, overpass_beg, overpass_end)
 # preparing the satellite data
 #-----------------------------
 filda_dict = MC.IO.read_data_reprocess(nl, tt)
-
 #---------------------
 # preparing PYMC model
 #---------------------
 # initialize the sensor
-v_sensor = MC.SR.viirs()
+v_sensor = MC.SR.viirs(band_list=list(set(nl.sel_bg_bands+nl.sel_fire_bands)))
 
 # define the background sensor (bgs)
 bgs = MC.SR.GetSensor(v_sensor, nl.sel_bg_bands)
@@ -54,12 +52,21 @@ biphase_estimator, ts_bi_fire = MC.init_biphasic_estimation(nl, fss)
 # initialize the background temperature estimator
 uniphase_estimator, ts_uni_fire = MC.init_uniphasic_estimation(nl, fss)
 
+
+dummy_dict = MC.IO.read_data_viirs_dummy(nl)
+
+MC.precompile(nl, dummy_dict, 
+              bg_estimator, biphase_estimator, uniphase_estimator, 
+              ts_bg, ts_bi_fire, ts_uni_fire,bgs, fss)
+
 #---------
 # sampling
 #---------
+
 # define two dataset object for data processing
 data_fire, data_bg = MC.get_sample_set(filda_dict, nl)
 
+# then do parallel...
 print(' - MAIN: Number of fire', len(data_fire))
 start_time_main = time.time()
 result = MC.MCBEF_MP(nl, data_bg, data_fire, 
@@ -89,5 +96,4 @@ for op in sample_dicts.keys():
 savename=state_path + sat + '47MCBEF.State.' + jdn + '.' + \
          overpass_beg+'_'+overpass_end + '.' + nl.version + '.nc'
 MC.IO.dict2nc(state_dict, nl, sat, 'State', savename)
-
 

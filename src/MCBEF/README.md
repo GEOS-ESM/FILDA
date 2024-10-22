@@ -1,6 +1,7 @@
 
 
 
+
 # McBEF
 Monte Carlo Biphasic Estimation of Fire Properties (McBEF)
 
@@ -12,13 +13,8 @@ like the Visible Infrared Imaging Radiometer Suite (VIIRS) and Geostationary
   
 ##  - **Recent update** - 
 
-1. Add VIIRS M10, M08 sensor data for the estimation
-2. Add a science value **P lower bound** to specify the minimal values for the fire fraction
-3. Add output of FP_Power_R_AC. Radiance based FRP estimation with atmospheric correction
-4. Redefine the prior for the uni-phasic model
-5. Redefine the selection of fire model for the estimation
-	- McBEF now will first attempt to use bi-phasic model for parameter estimates for all the input regardless of the **Gas flaring** or **Static source** flag. If fail, it will then try the uni-phasic model for the estimation.
-
+1. Improve the multi-processing setup to avoid THEANO compilation conflict
+2. Now, the directory for THEANO compilation can be specified in the namelist
 	
 
 ## Table of content
@@ -162,6 +158,7 @@ Root data directory     : ./DATA/
 Run directory           : ./
 Output directory        : ./
 Output version          : v1_0_0
+Compile directory       : ./THEANO/
 ```
 Some specific layout of input dataset is required, please refer to [Layout of the input dataset](#layout-of-the-input-dataset) for the preparation of the static data. 
 

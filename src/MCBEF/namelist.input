@@ -3,20 +3,21 @@
 %%%   CONTROL MENU   %%%:
 Background Band         : M14 M15 I05 M16
 Fire Band               : DNB M11 M13 M14 M15 M16
-Number of Draw          : 1000
+Number of Draw          : 500
 Number of Tune          : 2000
-Number of Chain         : 2
-Number of Core          : 70
+Number of Chain         : 4
+Number of Core          : -1
 Prior distribution      : U
 Emissivity NRT          : T
 Gradient Sampling?      : F
+Precompile model?       : T
 Turn on debug printout? : F
 ------------------------+-----------------------------------------------
 %%%      I/O MENU    %%%:
 Root data directory     : ./DATA/
-Run directory           : ./
-Output directory        : ./
-Output version          : v_1_0_0
+Output directory        : /Dedicated/jwang-data2/mzhou/project/OPNL_FILDA/McBEF/
+Output version          : Uniform_v_1_0_0
+Compile directory       : /Dedicated/jwang-data2/mzhou/project/OPNL_FILDA/McBEF/THEANO/
 ------------------------+-----------------------------------------------
 %%%   SCIENCE VALUE  %%%:
 Background mean         : 300.0
@@ -38,8 +39,8 @@ WV Scale factor mean    : 0.5
 WV Scale factor sigma   : 0.5
 FRP threshold           : 0
 FRP sigma scale factor  : 0.2
-Background SNR          : DNB=6 M11=30 M12=40 M13=30
-                     -->: M14=60 M15=60 M16=60 I05=60
-Fire SNR                : DNB=6 M11=70 M12=30 M13=70
-                     -->: M14=50 M15=50 M16=50 I05=50
+Background SNR          : DNB=6  M08=20 M10=20 M11=30 M12=40
+                     -->: M13=30 M14=60 M15=60 M16=60 I05=60
+Fire SNR                : DNB=6  M08=20 M10=40 M11=60 M12=30
+                     -->: M13=70 M14=50 M15=50 M16=50 I05=50
 ------------------------+-----------------------------------------------
