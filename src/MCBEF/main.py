@@ -66,6 +66,14 @@ filda_dict = MC.IO.get_surface_emit(filda_dict, nl, tt)
 # add the static flag
 filda_dict = MC.IO.get_static_thermal_anomaly(filda_dict, nl, tt)
 
+#-------------
+# pre-compile
+#-------------
+dummy_dict = MC.IO.read_data_viirs_dummy(nl)
+MC.precompile(nl, dummy_dict, 
+              bg_estimator, biphase_estimator, uniphase_estimator, 
+              ts_bg, ts_bi_fire, ts_uni_fire,bgs, fss)
+
 #---------
 # sampling
 #---------

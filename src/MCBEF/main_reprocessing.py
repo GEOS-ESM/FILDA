@@ -52,9 +52,10 @@ biphase_estimator, ts_bi_fire = MC.init_biphasic_estimation(nl, fss)
 # initialize the background temperature estimator
 uniphase_estimator, ts_uni_fire = MC.init_uniphasic_estimation(nl, fss)
 
-
+#-------------
+# pre-compile
+#-------------
 dummy_dict = MC.IO.read_data_viirs_dummy(nl)
-
 MC.precompile(nl, dummy_dict, 
               bg_estimator, biphase_estimator, uniphase_estimator, 
               ts_bg, ts_bi_fire, ts_uni_fire,bgs, fss)
