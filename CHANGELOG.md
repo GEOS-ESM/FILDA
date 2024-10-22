@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added option in the namelist to specify the directory for THEANO compilation 
+- Add a pre-compile function in main
 
 ### Changed
 - Improve the multi-processing setup to avoid THEANO compilation conflict
